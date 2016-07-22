@@ -1,0 +1,2829 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+<title>2016 Presidential Campaign Contribution</title>
+
+<script type="text/javascript">
+window.onload = function() {
+  var imgs = document.getElementsByTagName('img'), i, img;
+  for (i = 0; i < imgs.length; i++) {
+    img = imgs[i];
+    // center an image if it is the only element of its parent
+    if (img.parentElement.childElementCount === 1)
+      img.parentElement.style.textAlign = 'center';
+  }
+};
+</script>
+
+
+
+
+
+<style type="text/css">
+body, td {
+   font-family: sans-serif;
+   background-color: white;
+   font-size: 13px;
+}
+
+body {
+  max-width: 800px;
+  margin: auto;
+  padding: 1em;
+  line-height: 20px;
+}
+
+tt, code, pre {
+   font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace;
+}
+
+h1 {
+   font-size:2.2em;
+}
+
+h2 {
+   font-size:1.8em;
+}
+
+h3 {
+   font-size:1.4em;
+}
+
+h4 {
+   font-size:1.0em;
+}
+
+h5 {
+   font-size:0.9em;
+}
+
+h6 {
+   font-size:0.8em;
+}
+
+a:visited {
+   color: rgb(50%, 0%, 50%);
+}
+
+pre, img {
+  max-width: 100%;
+}
+pre {
+  overflow-x: auto;
+}
+pre code {
+   display: block; padding: 0.5em;
+}
+
+code {
+  font-size: 92%;
+  border: 1px solid #ccc;
+}
+
+code[class] {
+  background-color: #F8F8F8;
+}
+
+table, td, th {
+  border: none;
+}
+
+blockquote {
+   color:#666666;
+   margin:0;
+   padding-left: 1em;
+   border-left: 0.5em #EEE solid;
+}
+
+hr {
+   height: 0px;
+   border-bottom: none;
+   border-top-width: thin;
+   border-top-style: dotted;
+   border-top-color: #999999;
+}
+
+@media print {
+   * {
+      background: transparent !important;
+      color: black !important;
+      filter:none !important;
+      -ms-filter: none !important;
+   }
+
+   body {
+      font-size:12pt;
+      max-width:100%;
+   }
+
+   a, a:visited {
+      text-decoration: underline;
+   }
+
+   hr {
+      visibility: hidden;
+      page-break-before: always;
+   }
+
+   pre, blockquote {
+      padding-right: 1em;
+      page-break-inside: avoid;
+   }
+
+   tr, img {
+      page-break-inside: avoid;
+   }
+
+   img {
+      max-width: 100% !important;
+   }
+
+   @page :left {
+      margin: 15mm 20mm 15mm 10mm;
+   }
+
+   @page :right {
+      margin: 15mm 10mm 15mm 20mm;
+   }
+
+   p, h2, h3 {
+      orphans: 3; widows: 3;
+   }
+
+   h2, h3 {
+      page-break-after: avoid;
+   }
+}
+</style>
+
+
+
+</head>
+
+<body>
+<h1>2016 Presidential Campaign Contribution</h1>
+
+<h3>by Ambarish Banerjee</h3>
+
+<h2>Introduction</h2>
+
+<p>The purpose of this exercise was to investigate the 2016 presidential campaign contribution statistics and obtain some insight into the data. Some of the questions I planned to answer included the following:</p>
+
+<ol>
+<li>Which candidate received the highest contribution to his/her campaign fund?</li>
+<li>Which candidate had the highest number of unique contributors to his/her campaign fund?</li>
+<li>Which professions contributed highest to the presidential campaign?</li>
+<li>Which are the prominent states and zipcodes that contributed to the Republican and Democrat candidates?</li>
+</ol>
+
+<p>In the foregoing discussion we will look at these questions and try to obtain answers to these questions.</p>
+
+<hr>
+
+<p>I start by loading the data into a dataframe. While the assignment required that we look at the campaign contribution from any particular state, I wanted to look at the data for the entire country as some of the questions I wanted to answer include all 50 states. I reduced my dataframe to variables of interest and introduced two derived variables - the candidate&#39;s gender and his/her political party.</p>
+
+<pre><code>## &#39;data.frame&#39;:    3802344 obs. of  13 variables:
+##  $ cand_id          : Factor w/ 24 levels &quot;P00003392&quot;,&quot;P20002671&quot;,..: 11 11 11 11 11 11 11 11 11 11 ...
+##  $ cand_nm          : Factor w/ 24 levels &quot;Bush, Jeb&quot;,&quot;Carson, Benjamin S.&quot;,..: 18 18 18 18 18 18 18 18 18 18 ...
+##  $ contbr_nm        : chr  &quot;BLUM, MAUREEN&quot; &quot;DODSON, MARK B. MR.&quot; &quot;RUCINSKI, ROBERT&quot; &quot;DOHERTY, THERESA&quot; ...
+##  $ contbr_city      : chr  &quot;WASHINGTON&quot; &quot;ATLANTA&quot; &quot;APO&quot; &quot;APO&quot; ...
+##  $ contbr_st        : Factor w/ 94 levels &quot;20&quot;,&quot;30&quot;,&quot;AA&quot;,..: 1 2 4 4 4 4 4 4 4 4 ...
+##  $ contbr_zip       : chr  &quot;DC&quot; &quot;GA&quot; &quot;090960009&quot; &quot;097520002&quot; ...
+##  $ contbr_employer  : chr  &quot;STRATEGIC COALITIONS &amp; INITIATIVES LL&quot; &quot;MORTGAGE CAPITAL ADVISORS&quot; &quot;US ARMY&quot; &quot;DODEA/DS&quot; ...
+##  $ contbr_occupation: chr  &quot;OUTREACH DIRECTOR&quot; &quot;PRIVATE MORTGAGE BANKING&quot; &quot;PHYSICIAN&quot; &quot;TEACHER&quot; ...
+##  $ contb_receipt_amt: num  175 25 100 500 100 ...
+##  $ contb_receipt_dt : Date, format: &quot;2016-03-15&quot; &quot;2016-03-16&quot; ...
+##  $ party            : Factor w/ 4 levels &quot;D&quot;,&quot;G&quot;,&quot;L&quot;,&quot;R&quot;: 4 4 4 4 4 4 4 4 4 4 ...
+##  $ can_gender       : Factor w/ 2 levels &quot;F&quot;,&quot;M&quot;: 2 2 2 2 2 2 2 2 2 2 ...
+##  $ zip              : chr  NA NA &quot;09096&quot; &quot;09752&quot; ...
+</code></pre>
+
+<pre><code>##       cand_id                             cand_nm       
+##  P60007168:1895039   Sanders, Bernard         :1895039  
+##  P00003392: 836810   Clinton, Hillary Rodham  : 836810  
+##  P60006111: 551616   Cruz, Rafael Edward &#39;Ted&#39;: 551616  
+##  P60005915: 248085   Carson, Benjamin S.      : 248085  
+##  P60006723: 104782   Rubio, Marco             : 104782  
+##  P40003576:  32275   Paul, Rand               :  32275  
+##  (Other)  : 133737   (Other)                  : 133737  
+##   contbr_nm         contbr_city          contbr_st      
+##  Length:3802344     Length:3802344     CA     : 653397  
+##  Class :character   Class :character   TX     : 307815  
+##  Mode  :character   Mode  :character   NY     : 297217  
+##                                        FL     : 202615  
+##                                        WA     : 167914  
+##                                        MA     : 155057  
+##                                        (Other):2018329  
+##   contbr_zip        contbr_employer    contbr_occupation 
+##  Length:3802344     Length:3802344     Length:3802344    
+##  Class :character   Class :character   Class :character  
+##  Mode  :character   Mode  :character   Mode  :character  
+##                                                          
+##                                                          
+##                                                          
+##                                                          
+##  contb_receipt_amt contb_receipt_dt     party       can_gender 
+##  Min.   : -93308   Min.   :2013-10-01   D:2739242   F: 865479  
+##  1st Qu.:     15   1st Qu.:2016-01-04   G:    914   M:2936865  
+##  Median :     27   Median :2016-03-05   L:    645              
+##  Mean   :    131   Mean   :2016-02-09   R:1061543              
+##  3rd Qu.:     98   3rd Qu.:2016-04-12                          
+##  Max.   :4904861   Max.   :2016-05-31                          
+##                                                                
+##      zip           
+##  Length:3802344    
+##  Class :character  
+##  Mode  :character  
+##                    
+##                    
+##                    
+## 
+</code></pre>
+
+<h1>Univariate Plots Section</h1>
+
+<p>In my first plot, I investigate the distribution of contribution amounts for the entire population. One quick note, I excluded contribution amounts greater than 99-percentile and negative amounts as they were related to refunds and some rare situations. In addition, I transformed the y-axis to a logarithmic scale so that the frequent bins don&#39;t overshadow the infrequent ones. As expected, most of the contribution amounts were in the range between 0 and 300. However, there were a few additional peaks for higher contribution amounts (&gt;1000) and we will visit them later in this discussion. 
+Please note that I chose not remove the outliers as I believe they contain valuable information and therefore should not be truncated from the dataset.</p>
+
+<p><img src="figure/Univariate_Plots_1-1.png" alt="plot of chunk Univariate_Plots_1"></p>
+
+<table><thead>
+<tr>
+<th align="right">Mean Contribution</th>
+<th align="right">Median_Contribution</th>
+<th align="right">Minimum Contribution</th>
+<th align="right">Maximum Contribution</th>
+<th align="right">Contribution IQR</th>
+</tr>
+</thead><tbody>
+<tr>
+<td align="right">130.93</td>
+<td align="right">27</td>
+<td align="right">-93308</td>
+<td align="right">4904861</td>
+<td align="right">83.26</td>
+</tr>
+</tbody></table>
+
+<p>In my next plot, we look at the same statistics with the exception of square root transformation on the y-axis to investigate if the plot artifacts are more visible with this transformation which it wasn&#39;t.</p>
+
+<p><img src="figure/Univariate_Plots_2-1.png" alt="plot of chunk Univariate_Plots_2"></p>
+
+<p>In the next plot, I looked at the relative distribution of the contribution amount in the population. It showed that the bulk of the contributors subscribed between $0 and $100 in a single transaction.</p>
+
+<p><img src="figure/Univariate_Plots_3-1.png" alt="plot of chunk Univariate_Plots_3"></p>
+
+<p>In the next plot involving univariate statistics, I looked at the distribution of number of repeat subscriptions made by each of the contributors in the population. Unsurprisingly, the highest peak was noted at 1 (one contribution per user) and the count gradually tapered off. Here also I chose not to remove the outliers as in my opinion they contain valuable information.</p>
+
+<p><img src="figure/Univariate_Plots_4-1.png" alt="plot of chunk Univariate_Plots_4"></p>
+
+<table><thead>
+<tr>
+<th align="left">Contributor Name</th>
+<th align="right">Mean Contribution</th>
+<th align="right">Median_Contribution</th>
+<th align="right">Total Contribution</th>
+<th align="right">Minimum Contribution</th>
+<th align="right">Maximum Contribution</th>
+<th align="right">Count</th>
+</tr>
+</thead><tbody>
+<tr>
+<td align="left">ACTBLUE</td>
+<td align="right">203.08</td>
+<td align="right">100</td>
+<td align="right">3095699.89</td>
+<td align="right">1.00</td>
+<td align="right">5400</td>
+<td align="right">15244</td>
+</tr>
+<tr>
+<td align="left">TYLER, CAMM</td>
+<td align="right">1.01</td>
+<td align="right">1</td>
+<td align="right">678.00</td>
+<td align="right">1.00</td>
+<td align="right">11</td>
+<td align="right">668</td>
+</tr>
+<tr>
+<td align="left">PURCELL, LARRY</td>
+<td align="right">4.83</td>
+<td align="right">3</td>
+<td align="right">2590.50</td>
+<td align="right">1.00</td>
+<td align="right">30</td>
+<td align="right">536</td>
+</tr>
+<tr>
+<td align="left">FLESNER, CHRISTOPHER</td>
+<td align="right">5.22</td>
+<td align="right">2</td>
+<td align="right">2708.47</td>
+<td align="right">1.00</td>
+<td align="right">250</td>
+<td align="right">519</td>
+</tr>
+<tr>
+<td align="left">WILLIAMS, JAMES</td>
+<td align="right">36.45</td>
+<td align="right">25</td>
+<td align="right">15744.49</td>
+<td align="right">1.00</td>
+<td align="right">500</td>
+<td align="right">432</td>
+</tr>
+<tr>
+<td align="left">LENELL, MATT</td>
+<td align="right">1.19</td>
+<td align="right">1</td>
+<td align="right">462.00</td>
+<td align="right">1.00</td>
+<td align="right">11</td>
+<td align="right">388</td>
+</tr>
+<tr>
+<td align="left">JOHNSON, DAVID</td>
+<td align="right">72.15</td>
+<td align="right">30</td>
+<td align="right">25397.55</td>
+<td align="right">3.34</td>
+<td align="right">2700</td>
+<td align="right">352</td>
+</tr>
+<tr>
+<td align="left">SMITH, DAVID</td>
+<td align="right">83.04</td>
+<td align="right">35</td>
+<td align="right">28982.04</td>
+<td align="right">1.00</td>
+<td align="right">2700</td>
+<td align="right">349</td>
+</tr>
+<tr>
+<td align="left">KELJIK, PATRICIA A</td>
+<td align="right">4.07</td>
+<td align="right">3</td>
+<td align="right">1368.03</td>
+<td align="right">1.00</td>
+<td align="right">27</td>
+<td align="right">336</td>
+</tr>
+<tr>
+<td align="left">DAVIS, JOHN</td>
+<td align="right">51.12</td>
+<td align="right">3</td>
+<td align="right">17126.45</td>
+<td align="right">1.00</td>
+<td align="right">2700</td>
+<td align="right">335</td>
+</tr>
+</tbody></table>
+
+<p>In the following plot, we look at the number of contributions from each of the top 20 cities (by number of contributions). As it can be seen, New York leads the chart with almost two times that of Los Angeles.</p>
+
+<p><img src="figure/Univariate_Plots_5-1.png" alt="plot of chunk Univariate_Plots_5"></p>
+
+<table><thead>
+<tr>
+<th align="left">City</th>
+<th align="right">Mean Contribution</th>
+<th align="right">Median_Contribution</th>
+<th align="right">Total Contribution</th>
+<th align="right">Minimum Contribution</th>
+<th align="right">Maximum Contribution</th>
+<th align="right">Count</th>
+</tr>
+</thead><tbody>
+<tr>
+<td align="left">NEW YORK</td>
+<td align="right">569.19</td>
+<td align="right">50.00</td>
+<td align="right">47842016</td>
+<td align="right">0.00</td>
+<td align="right">4904861</td>
+<td align="right">84053</td>
+</tr>
+<tr>
+<td align="left">LOS ANGELES</td>
+<td align="right">209.38</td>
+<td align="right">27.00</td>
+<td align="right">10117737</td>
+<td align="right">0.00</td>
+<td align="right">10800</td>
+<td align="right">48322</td>
+</tr>
+<tr>
+<td align="left">SEATTLE</td>
+<td align="right">90.93</td>
+<td align="right">27.00</td>
+<td align="right">4025281</td>
+<td align="right">0.00</td>
+<td align="right">5400</td>
+<td align="right">44269</td>
+</tr>
+<tr>
+<td align="left">SAN FRANCISCO</td>
+<td align="right">179.83</td>
+<td align="right">35.00</td>
+<td align="right">7833183</td>
+<td align="right">0.00</td>
+<td align="right">10000</td>
+<td align="right">43558</td>
+</tr>
+<tr>
+<td align="left">BROOKLYN</td>
+<td align="right">108.57</td>
+<td align="right">27.00</td>
+<td align="right">4215548</td>
+<td align="right">0.01</td>
+<td align="right">10800</td>
+<td align="right">38829</td>
+</tr>
+<tr>
+<td align="left">PORTLAND</td>
+<td align="right">73.67</td>
+<td align="right">27.00</td>
+<td align="right">2772917</td>
+<td align="right">0.00</td>
+<td align="right">10800</td>
+<td align="right">37639</td>
+</tr>
+<tr>
+<td align="left">CHICAGO</td>
+<td align="right">179.01</td>
+<td align="right">27.00</td>
+<td align="right">6590774</td>
+<td align="right">0.00</td>
+<td align="right">10800</td>
+<td align="right">36817</td>
+</tr>
+<tr>
+<td align="left">HOUSTON</td>
+<td align="right">329.27</td>
+<td align="right">50.00</td>
+<td align="right">11889219</td>
+<td align="right">0.00</td>
+<td align="right">10800</td>
+<td align="right">36108</td>
+</tr>
+<tr>
+<td align="left">WASHINGTON</td>
+<td align="right">300.30</td>
+<td align="right">50.00</td>
+<td align="right">10133465</td>
+<td align="right">0.00</td>
+<td align="right">10800</td>
+<td align="right">33745</td>
+</tr>
+<tr>
+<td align="left">AUSTIN</td>
+<td align="right">152.77</td>
+<td align="right">27.44</td>
+<td align="right">4307263</td>
+<td align="right">0.00</td>
+<td align="right">10800</td>
+<td align="right">28194</td>
+</tr>
+<tr>
+<td align="left">SAN DIEGO</td>
+<td align="right">90.62</td>
+<td align="right">27.00</td>
+<td align="right">2083174</td>
+<td align="right">0.24</td>
+<td align="right">5400</td>
+<td align="right">22988</td>
+</tr>
+<tr>
+<td align="left">DALLAS</td>
+<td align="right">389.07</td>
+<td align="right">50.00</td>
+<td align="right">7757190</td>
+<td align="right">0.00</td>
+<td align="right">10800</td>
+<td align="right">19938</td>
+</tr>
+<tr>
+<td align="left">OAKLAND</td>
+<td align="right">95.66</td>
+<td align="right">27.00</td>
+<td align="right">1616473</td>
+<td align="right">0.22</td>
+<td align="right">5400</td>
+<td align="right">16898</td>
+</tr>
+<tr>
+<td align="left">ARLINGTON</td>
+<td align="right">158.95</td>
+<td align="right">38.00</td>
+<td align="right">2650080</td>
+<td align="right">0.00</td>
+<td align="right">5400</td>
+<td align="right">16672</td>
+</tr>
+<tr>
+<td align="left">DENVER</td>
+<td align="right">151.97</td>
+<td align="right">27.00</td>
+<td align="right">2531392</td>
+<td align="right">0.00</td>
+<td align="right">5400</td>
+<td align="right">16657</td>
+</tr>
+<tr>
+<td align="left">SAN JOSE</td>
+<td align="right">81.21</td>
+<td align="right">27.00</td>
+<td align="right">1270500</td>
+<td align="right">0.50</td>
+<td align="right">5400</td>
+<td align="right">15644</td>
+</tr>
+<tr>
+<td align="left">SAN ANTONIO</td>
+<td align="right">161.46</td>
+<td align="right">35.00</td>
+<td align="right">2446300</td>
+<td align="right">0.33</td>
+<td align="right">10500</td>
+<td align="right">15151</td>
+</tr>
+<tr>
+<td align="left">PHILADELPHIA</td>
+<td align="right">128.10</td>
+<td align="right">27.00</td>
+<td align="right">1914016</td>
+<td align="right">0.00</td>
+<td align="right">5400</td>
+<td align="right">14942</td>
+</tr>
+<tr>
+<td align="left">TUCSON</td>
+<td align="right">73.94</td>
+<td align="right">27.00</td>
+<td align="right">1094976</td>
+<td align="right">0.24</td>
+<td align="right">5400</td>
+<td align="right">14809</td>
+</tr>
+<tr>
+<td align="left">MINNEAPOLIS</td>
+<td align="right">101.78</td>
+<td align="right">27.00</td>
+<td align="right">1485698</td>
+<td align="right">0.00</td>
+<td align="right">5400</td>
+<td align="right">14597</td>
+</tr>
+</tbody></table>
+
+<p>In the final plot, we look at the top 20 zipcodes in the country that contributed most frequently to the 2016 presidential campaign fund. It can be seen that most of these zipcodes are in one of four metropolitan areas: New York, Boston, San Francisco, or Washington DC.</p>
+
+<p><img src="figure/Univariate_Plots_6-1.png" alt="plot of chunk Univariate_Plots_6"></p>
+
+<table><thead>
+<tr>
+<th align="left">Zipcode</th>
+<th align="right">Mean Contribution</th>
+<th align="right">Median_Contribution</th>
+<th align="right">Total Contribution</th>
+<th align="right">Minimum Contribution</th>
+<th align="right">Maximum Contribution</th>
+<th align="right">Count</th>
+</tr>
+</thead><tbody>
+<tr>
+<td align="left">02144</td>
+<td align="right">190.74</td>
+<td align="right">100.00</td>
+<td align="right">3215384.3</td>
+<td align="right">1.00</td>
+<td align="right">5400</td>
+<td align="right">16857</td>
+</tr>
+<tr>
+<td align="left">10025</td>
+<td align="right">162.64</td>
+<td align="right">38.00</td>
+<td align="right">1129046.6</td>
+<td align="right">0.00</td>
+<td align="right">2700</td>
+<td align="right">6942</td>
+</tr>
+<tr>
+<td align="left">10024</td>
+<td align="right">312.48</td>
+<td align="right">50.00</td>
+<td align="right">1955529.3</td>
+<td align="right">0.00</td>
+<td align="right">10800</td>
+<td align="right">6258</td>
+</tr>
+<tr>
+<td align="left">10023</td>
+<td align="right">324.81</td>
+<td align="right">50.00</td>
+<td align="right">1956009.4</td>
+<td align="right">0.00</td>
+<td align="right">5400</td>
+<td align="right">6022</td>
+</tr>
+<tr>
+<td align="left">10011</td>
+<td align="right">288.67</td>
+<td align="right">50.00</td>
+<td align="right">1654661.0</td>
+<td align="right">0.22</td>
+<td align="right">5400</td>
+<td align="right">5732</td>
+</tr>
+<tr>
+<td align="left">94110</td>
+<td align="right">116.88</td>
+<td align="right">35.00</td>
+<td align="right">614196.9</td>
+<td align="right">0.09</td>
+<td align="right">5000</td>
+<td align="right">5255</td>
+</tr>
+<tr>
+<td align="left">11215</td>
+<td align="right">115.52</td>
+<td align="right">27.00</td>
+<td align="right">549876.2</td>
+<td align="right">0.94</td>
+<td align="right">5400</td>
+<td align="right">4760</td>
+</tr>
+<tr>
+<td align="left">11201</td>
+<td align="right">220.49</td>
+<td align="right">38.00</td>
+<td align="right">1046900.3</td>
+<td align="right">0.69</td>
+<td align="right">2700</td>
+<td align="right">4748</td>
+</tr>
+<tr>
+<td align="left">94114</td>
+<td align="right">167.66</td>
+<td align="right">38.00</td>
+<td align="right">776262.0</td>
+<td align="right">1.00</td>
+<td align="right">2700</td>
+<td align="right">4630</td>
+</tr>
+<tr>
+<td align="left">98103</td>
+<td align="right">68.81</td>
+<td align="right">27.00</td>
+<td align="right">318307.3</td>
+<td align="right">0.82</td>
+<td align="right">2700</td>
+<td align="right">4626</td>
+</tr>
+<tr>
+<td align="left">20009</td>
+<td align="right">224.48</td>
+<td align="right">50.00</td>
+<td align="right">980285.1</td>
+<td align="right">0.34</td>
+<td align="right">2700</td>
+<td align="right">4367</td>
+</tr>
+<tr>
+<td align="left">05401</td>
+<td align="right">59.79</td>
+<td align="right">27.00</td>
+<td align="right">257141.0</td>
+<td align="right">1.00</td>
+<td align="right">5400</td>
+<td align="right">4301</td>
+</tr>
+<tr>
+<td align="left">94611</td>
+<td align="right">171.59</td>
+<td align="right">32.87</td>
+<td align="right">668514.5</td>
+<td align="right">1.00</td>
+<td align="right">5400</td>
+<td align="right">3896</td>
+</tr>
+<tr>
+<td align="left">10128</td>
+<td align="right">439.27</td>
+<td align="right">50.00</td>
+<td align="right">1685465.1</td>
+<td align="right">0.00</td>
+<td align="right">5400</td>
+<td align="right">3837</td>
+</tr>
+<tr>
+<td align="left">10003</td>
+<td align="right">262.18</td>
+<td align="right">50.00</td>
+<td align="right">994177.8</td>
+<td align="right">0.44</td>
+<td align="right">3000</td>
+<td align="right">3792</td>
+</tr>
+<tr>
+<td align="left">90046</td>
+<td align="right">154.36</td>
+<td align="right">27.00</td>
+<td align="right">572050.9</td>
+<td align="right">1.00</td>
+<td align="right">2700</td>
+<td align="right">3706</td>
+</tr>
+<tr>
+<td align="left">94117</td>
+<td align="right">127.59</td>
+<td align="right">38.00</td>
+<td align="right">453713.4</td>
+<td align="right">0.33</td>
+<td align="right">5400</td>
+<td align="right">3556</td>
+</tr>
+<tr>
+<td align="left">20016</td>
+<td align="right">458.01</td>
+<td align="right">94.31</td>
+<td align="right">1611727.5</td>
+<td align="right">0.98</td>
+<td align="right">10800</td>
+<td align="right">3519</td>
+</tr>
+<tr>
+<td align="left">98115</td>
+<td align="right">73.08</td>
+<td align="right">27.00</td>
+<td align="right">254895.9</td>
+<td align="right">0.64</td>
+<td align="right">2700</td>
+<td align="right">3488</td>
+</tr>
+<tr>
+<td align="left">14850</td>
+<td align="right">72.69</td>
+<td align="right">27.00</td>
+<td align="right">246845.8</td>
+<td align="right">1.00</td>
+<td align="right">3000</td>
+<td align="right">3396</td>
+</tr>
+</tbody></table>
+
+<h1>Univariate Analysis</h1>
+
+<h3>What is the structure of your dataset?</h3>
+
+<p>I chose the 2016 presidential campaign contribution data for all candidates across all states. The initial dataset contained 18 variables of which I retained ten which are as follows:</p>
+
+<ol>
+<li>Candidate Id (cand_id): Factor with 24 levels</li>
+<li>Candidate name (cand_nm): Factor with 24 levels</li>
+<li>Contributor name (contbr_nm): String</li>
+<li>Contributor city (contbr_city): String</li>
+<li>Contributor state (contbr_st): Factor with 94 levels</li>
+<li>Contributor zip (contbr_zip): String</li>
+<li>Contributor employer (contbr_employer): String</li>
+<li>Contributor occupation (contbr_occupation): Factors with 73262 levels</li>
+<li>Contribution receipt amount (contb_receipt_amt): Numeric</li>
+<li>Contribution date (contb_receipt_dt): String</li>
+</ol>
+
+<p>In addition, I introduced two derived variables which are as given below:</p>
+
+<ol>
+<li>Political party (party): Factor with 4 levels</li>
+<li>Candidate gender (can_gender): Factor with 2 levels</li>
+</ol>
+
+<h3>What is/are the main feature(s) of interest in your dataset?</h3>
+
+<p>The most important feature in the dataset is the contribution receipt amount as this is the primary metric under study as part of this analysis. The variables candidate name, contributor city, contributor state, contributor zip, contributor employer, contributor occupation, contribution date, and party will be used to aggregate and view the &quot;contribution amount&quot;.</p>
+
+<h3>What other features in the dataset do you think will help support your investigation into your feature(s) of interest?</h3>
+
+<p>The political party and gender of each of the presidential candidates can be useful as it would help with between-group comparisons.</p>
+
+<h3>Did you create any new variables from existing variables in the dataset?</h3>
+
+<p>Yes, I truncated the zipcode values provided in the dataset into five-digit zipcodes which is introduced later. In addition, I also converted the contribution dates to YYYY-MM format to look at the campaign contribution for each candidate with respect to time. Finally, I transformed the abbreviated &quot;contributor state&quot; to the full name for plotting purposes.</p>
+
+<h3>Of the features you investigated, were there any unusual distributions? Did you perform any operations on the data to tidy, adjust, or change the form of the data? If so, why did you do this?</h3>
+
+<p>For the univariate statitics, I investigated both logarithmic and square root transformation on the y-axis in order to ensure that the more frequent groups dont&#39;t overshadow the less frequent groups. In case of the contribution amounts, I found a logarithmic transformation was more useful. In addition, I also limited the x-axis (contribution amount) between 0 and 99th percentile to keep the focus on the dominant artificants in the plot. With the relative distribution of the contribution amount, I used the &quot;..&quot; notation to obtain a proportion value for each of the data-bins in my population. Finally, I used the dplyr package to obtain count of repeat contributions made by individual subscribers to the 2016 presidential campaign fund which I highlighted in the final plot in this section.</p>
+
+<h1>Bivariate Plots Section</h1>
+
+<p>Before looking at any plot involving two separate variables, I looked at the correlation coefficient between &quot;Contribution date&quot; and &quot;Contribution amount&quot;. The results below indicate that there is almost no &quot;linear&quot; relationship between these variables and therefore almost independent of each other.</p>
+
+<pre><code>## [1] -0.02361756
+</code></pre>
+
+<hr>
+
+<p>In the &quot;Bivariate Plot&quot; section, I investigated the relationship between the contribution amount across different factor variables including the presidential candidate, contributor occupation, and contributor employer. In addition, I also looked at the number of unique contributors for each 2016 presidential candidate.</p>
+
+<hr>
+
+<p>In the first plot of this section, I plotted the number of unique contributors by each candidate. I used the square-root transformation for the y-axis. The plot features suggest that Bernie Sanders tops the chart with approximately 220,000 unqiue contributors with Hillary Clinton at the second spot at 180,000. The closest Republican contender, Rafael Cruz, was at 100,000.</p>
+
+<p><img src="figure/Bivariate_Plots_1-1.png" alt="plot of chunk Bivariate_Plots_1"></p>
+
+<p>In the next plot, we look at the summary statisitics and gross contribution for each 2016 presidential candidate. The most interesting feature in this plot was the fact that some of the contributors (outliers) to Clinton&#39;s presidential campaign contributed more than the gross collection of other presidential candidates.</p>
+
+<table><thead>
+<tr>
+<th align="left">Candidate Name</th>
+<th align="right">Total Contribution</th>
+<th align="right">Mean Contribution</th>
+<th align="right">Median Contribution</th>
+<th align="right">Minimum Contribution</th>
+<th align="right">Maximum Contribution</th>
+</tr>
+</thead><tbody>
+<tr>
+<td align="left">Clinton, Hillary Rodham</td>
+<td align="right">200965276.63</td>
+<td align="right">242.54</td>
+<td align="right">38.00</td>
+<td align="right">0.01</td>
+<td align="right">4904860.5</td>
+</tr>
+<tr>
+<td align="left">Sanders, Bernard</td>
+<td align="right">92603135.46</td>
+<td align="right">49.16</td>
+<td align="right">27.00</td>
+<td align="right">1.00</td>
+<td align="right">10000.0</td>
+</tr>
+<tr>
+<td align="left">Cruz, Rafael Edward &#39;Ted&#39;</td>
+<td align="right">69727027.02</td>
+<td align="right">128.89</td>
+<td align="right">50.00</td>
+<td align="right">1.00</td>
+<td align="right">10800.0</td>
+</tr>
+<tr>
+<td align="left">Rubio, Marco</td>
+<td align="right">40541077.67</td>
+<td align="right">408.45</td>
+<td align="right">100.00</td>
+<td align="right">1.00</td>
+<td align="right">10800.0</td>
+</tr>
+<tr>
+<td align="left">Bush, Jeb</td>
+<td align="right">33773278.24</td>
+<td align="right">1204.64</td>
+<td align="right">500.00</td>
+<td align="right">0.20</td>
+<td align="right">15000.0</td>
+</tr>
+<tr>
+<td align="left">Carson, Benjamin S.</td>
+<td align="right">29013999.56</td>
+<td align="right">118.47</td>
+<td align="right">50.00</td>
+<td align="right">0.50</td>
+<td align="right">18000.0</td>
+</tr>
+<tr>
+<td align="left">Kasich, John R.</td>
+<td align="right">14751218.02</td>
+<td align="right">585.23</td>
+<td align="right">250.00</td>
+<td align="right">3.00</td>
+<td align="right">29100.0</td>
+</tr>
+<tr>
+<td align="left">Christie, Christopher J.</td>
+<td align="right">8133946.64</td>
+<td align="right">1457.70</td>
+<td align="right">1000.00</td>
+<td align="right">1.00</td>
+<td align="right">7500.0</td>
+</tr>
+<tr>
+<td align="left">Fiorina, Carly</td>
+<td align="right">6693844.66</td>
+<td align="right">243.09</td>
+<td align="right">100.00</td>
+<td align="right">2.00</td>
+<td align="right">10000.0</td>
+</tr>
+<tr>
+<td align="left">Walker, Scott</td>
+<td align="right">6387454.96</td>
+<td align="right">1016.95</td>
+<td align="right">476.00</td>
+<td align="right">1.00</td>
+<td align="right">10800.0</td>
+</tr>
+<tr>
+<td align="left">Paul, Rand</td>
+<td align="right">6271793.25</td>
+<td align="right">195.52</td>
+<td align="right">50.00</td>
+<td align="right">0.01</td>
+<td align="right">7300.0</td>
+</tr>
+<tr>
+<td align="left">Graham, Lindsey O.</td>
+<td align="right">4547761.82</td>
+<td align="right">1171.50</td>
+<td align="right">500.00</td>
+<td align="right">5.00</td>
+<td align="right">10000.0</td>
+</tr>
+<tr>
+<td align="left">Trump, Donald J.</td>
+<td align="right">4484497.95</td>
+<td align="right">298.65</td>
+<td align="right">162.01</td>
+<td align="right">1.00</td>
+<td align="right">86936.8</td>
+</tr>
+<tr>
+<td align="left">O&#39;Malley, Martin Joseph</td>
+<td align="right">4057351.76</td>
+<td align="right">781.46</td>
+<td align="right">300.00</td>
+<td align="right">0.01</td>
+<td align="right">5400.0</td>
+</tr>
+<tr>
+<td align="left">Huckabee, Mike</td>
+<td align="right">2498977.66</td>
+<td align="right">392.98</td>
+<td align="right">92.00</td>
+<td align="right">1.00</td>
+<td align="right">7000.0</td>
+</tr>
+<tr>
+<td align="left">Jindal, Bobby</td>
+<td align="right">1275393.16</td>
+<td align="right">1675.94</td>
+<td align="right">2700.00</td>
+<td align="right">5.00</td>
+<td align="right">2700.0</td>
+</tr>
+<tr>
+<td align="left">Perry, James R. (Rick)</td>
+<td align="right">1189868.23</td>
+<td align="right">1359.85</td>
+<td align="right">1000.00</td>
+<td align="right">3.00</td>
+<td align="right">2700.0</td>
+</tr>
+<tr>
+<td align="left">Santorum, Richard J.</td>
+<td align="right">1117908.06</td>
+<td align="right">687.10</td>
+<td align="right">250.00</td>
+<td align="right">2.69</td>
+<td align="right">5400.0</td>
+</tr>
+<tr>
+<td align="left">Lessig, Lawrence</td>
+<td align="right">624219.50</td>
+<td align="right">466.88</td>
+<td align="right">250.00</td>
+<td align="right">1.00</td>
+<td align="right">2700.0</td>
+</tr>
+<tr>
+<td align="left">Pataki, George E.</td>
+<td align="right">476590.98</td>
+<td align="right">1418.43</td>
+<td align="right">1000.00</td>
+<td align="right">20.16</td>
+<td align="right">2700.0</td>
+</tr>
+<tr>
+<td align="left">Webb, James Henry Jr.</td>
+<td align="right">439246.41</td>
+<td align="right">549.06</td>
+<td align="right">250.00</td>
+<td align="right">5.00</td>
+<td align="right">5400.0</td>
+</tr>
+<tr>
+<td align="left">Johnson, Gary</td>
+<td align="right">343054.33</td>
+<td align="right">537.70</td>
+<td align="right">250.00</td>
+<td align="right">10.00</td>
+<td align="right">5400.0</td>
+</tr>
+<tr>
+<td align="left">Stein, Jill</td>
+<td align="right">158502.00</td>
+<td align="right">173.80</td>
+<td align="right">100.00</td>
+<td align="right">5.00</td>
+<td align="right">2800.0</td>
+</tr>
+<tr>
+<td align="left">Gilmore, James S IIII</td>
+<td align="right">99660.71</td>
+<td align="right">1365.22</td>
+<td align="right">1000.00</td>
+<td align="right">19.80</td>
+<td align="right">2700.0</td>
+</tr>
+</tbody></table>
+
+<p><img src="figure/Bivariate_Plots_2-1.png" alt="plot of chunk Bivariate_Plots_2"></p>
+
+<p>In the next plot, we look at the campaign contributions from the 20 highest grossing occupations. We notice that Attroneys top the chart followed closely by Homemakers. Some of the other professions that also contributed heavily to the 2016 campaign fund include CEOs, consultants, and owners. An interesting feature that we notice here is that CEOs lag behnd attorneys and homemakers in gross contribution but their 75th percentile is significantly higher than any other group.</p>
+
+<table><thead>
+<tr>
+<th align="left">Occupation Name</th>
+<th align="right">Total Contribution</th>
+<th align="right">Mean Contribution</th>
+<th align="right">Median Contribution</th>
+<th align="right">Minimum Contribution</th>
+<th align="right">Maximum Contribution</th>
+<th align="right">Count</th>
+</tr>
+</thead><tbody>
+<tr>
+<td align="left">ATTORNEY</td>
+<td align="right">28964005</td>
+<td align="right">352.71</td>
+<td align="right">50.00</td>
+<td align="right">0.01</td>
+<td align="right">10800.0</td>
+<td align="right">82119</td>
+</tr>
+<tr>
+<td align="left">HOMEMAKER</td>
+<td align="right">21505435</td>
+<td align="right">414.55</td>
+<td align="right">50.00</td>
+<td align="right">0.05</td>
+<td align="right">10800.0</td>
+<td align="right">51877</td>
+</tr>
+<tr>
+<td align="left">CEO</td>
+<td align="right">11195230</td>
+<td align="right">756.95</td>
+<td align="right">100.00</td>
+<td align="right">0.24</td>
+<td align="right">10800.0</td>
+<td align="right">14790</td>
+</tr>
+<tr>
+<td align="left">PHYSICIAN</td>
+<td align="right">10615146</td>
+<td align="right">196.32</td>
+<td align="right">50.00</td>
+<td align="right">0.14</td>
+<td align="right">20000.0</td>
+<td align="right">54071</td>
+</tr>
+<tr>
+<td align="left">PRESIDENT</td>
+<td align="right">9539833</td>
+<td align="right">686.42</td>
+<td align="right">100.00</td>
+<td align="right">0.05</td>
+<td align="right">10800.0</td>
+<td align="right">13898</td>
+</tr>
+<tr>
+<td align="left">CONSULTANT</td>
+<td align="right">9003202</td>
+<td align="right">231.20</td>
+<td align="right">50.00</td>
+<td align="right">0.04</td>
+<td align="right">10000.0</td>
+<td align="right">38942</td>
+</tr>
+<tr>
+<td align="left">LAWYER</td>
+<td align="right">7374094</td>
+<td align="right">355.84</td>
+<td align="right">68.44</td>
+<td align="right">0.08</td>
+<td align="right">10800.0</td>
+<td align="right">20723</td>
+</tr>
+<tr>
+<td align="left">EXECUTIVE</td>
+<td align="right">7208458</td>
+<td align="right">704.57</td>
+<td align="right">100.00</td>
+<td align="right">0.01</td>
+<td align="right">86936.8</td>
+<td align="right">10231</td>
+</tr>
+<tr>
+<td align="left">OWNER</td>
+<td align="right">6861447</td>
+<td align="right">447.85</td>
+<td align="right">79.46</td>
+<td align="right">0.64</td>
+<td align="right">10800.0</td>
+<td align="right">15321</td>
+</tr>
+<tr>
+<td align="left">ENGINEER</td>
+<td align="right">4828687</td>
+<td align="right">100.34</td>
+<td align="right">38.00</td>
+<td align="right">0.50</td>
+<td align="right">5400.0</td>
+<td align="right">48124</td>
+</tr>
+<tr>
+<td align="left">REAL ESTATE</td>
+<td align="right">4474520</td>
+<td align="right">466.39</td>
+<td align="right">100.00</td>
+<td align="right">0.45</td>
+<td align="right">10800.0</td>
+<td align="right">9594</td>
+</tr>
+<tr>
+<td align="left">PROFESSOR</td>
+<td align="right">4251680</td>
+<td align="right">98.08</td>
+<td align="right">27.00</td>
+<td align="right">0.09</td>
+<td align="right">5000.0</td>
+<td align="right">43351</td>
+</tr>
+<tr>
+<td align="left">TEACHER</td>
+<td align="right">4170733</td>
+<td align="right">59.02</td>
+<td align="right">25.00</td>
+<td align="right">0.09</td>
+<td align="right">5400.0</td>
+<td align="right">70662</td>
+</tr>
+<tr>
+<td align="left">INVESTOR</td>
+<td align="right">4096921</td>
+<td align="right">986.50</td>
+<td align="right">250.00</td>
+<td align="right">1.00</td>
+<td align="right">10800.0</td>
+<td align="right">4153</td>
+</tr>
+<tr>
+<td align="left">MANAGER</td>
+<td align="right">3897668</td>
+<td align="right">151.55</td>
+<td align="right">30.00</td>
+<td align="right">0.04</td>
+<td align="right">10800.0</td>
+<td align="right">25719</td>
+</tr>
+<tr>
+<td align="left">STUDENT</td>
+<td align="right">3286753</td>
+<td align="right">142.31</td>
+<td align="right">25.00</td>
+<td align="right">0.09</td>
+<td align="right">5500.0</td>
+<td align="right">23095</td>
+</tr>
+<tr>
+<td align="left">SALES</td>
+<td align="right">3124551</td>
+<td align="right">97.84</td>
+<td align="right">27.00</td>
+<td align="right">0.09</td>
+<td align="right">10000.0</td>
+<td align="right">31934</td>
+</tr>
+<tr>
+<td align="left">CONDUIT TOTAL LISTED IN AGG. FIELD</td>
+<td align="right">3096980</td>
+<td align="right">202.79</td>
+<td align="right">100.00</td>
+<td align="right">1.00</td>
+<td align="right">5400.0</td>
+<td align="right">15272</td>
+</tr>
+<tr>
+<td align="left">BUSINESS OWNER</td>
+<td align="right">2872423</td>
+<td align="right">201.43</td>
+<td align="right">50.00</td>
+<td align="right">0.79</td>
+<td align="right">10800.0</td>
+<td align="right">14260</td>
+</tr>
+<tr>
+<td align="left">PARTNER</td>
+<td align="right">2485276</td>
+<td align="right">1051.75</td>
+<td align="right">500.00</td>
+<td align="right">1.00</td>
+<td align="right">10800.0</td>
+<td align="right">2363</td>
+</tr>
+</tbody></table>
+
+<p><img src="figure/Bivariate_Plots_3-1.png" alt="plot of chunk Bivariate_Plots_3"></p>
+
+<p>In the final plot in this section, we look at the contributions made by employees of different companies. Employees from Google and Goldman Sachs are almost tied at the top sport for gross contribution while the median and 75th percentile contribution for employyes from Goldman Sachs is almost two orders of magnitude higher. Another interesting feature was that employees from Stanford University comprised one of the top 5 contributing groups to the 2016 presidential campaign fund.</p>
+
+<table><thead>
+<tr>
+<th align="left">Employer Name</th>
+<th align="right">Total Contribution</th>
+<th align="right">Mean Contribution</th>
+<th align="right">Median Contribution</th>
+<th align="right">Minimum Contribution</th>
+<th align="right">Maximum Contribution</th>
+<th align="right">Count</th>
+</tr>
+</thead><tbody>
+<tr>
+<td align="left">GOOGLE</td>
+<td align="right">599783.4</td>
+<td align="right">194.17</td>
+<td align="right">50</td>
+<td align="right">1.00</td>
+<td align="right">5000</td>
+<td align="right">3089</td>
+</tr>
+<tr>
+<td align="left">GOLDMAN SACHS</td>
+<td align="right">571216.1</td>
+<td align="right">1779.49</td>
+<td align="right">2700</td>
+<td align="right">10.00</td>
+<td align="right">10800</td>
+<td align="right">321</td>
+</tr>
+<tr>
+<td align="left">MORGAN STANLEY</td>
+<td align="right">444389.5</td>
+<td align="right">715.60</td>
+<td align="right">250</td>
+<td align="right">5.00</td>
+<td align="right">5400</td>
+<td align="right">621</td>
+</tr>
+<tr>
+<td align="left">MORGAN &amp; MORGAN</td>
+<td align="right">376258.0</td>
+<td align="right">1062.88</td>
+<td align="right">500</td>
+<td align="right">3.00</td>
+<td align="right">2700</td>
+<td align="right">354</td>
+</tr>
+<tr>
+<td align="left">MICROSOFT</td>
+<td align="right">351106.2</td>
+<td align="right">120.57</td>
+<td align="right">35</td>
+<td align="right">0.56</td>
+<td align="right">5400</td>
+<td align="right">2912</td>
+</tr>
+<tr>
+<td align="left">STANFORD UNIVERSITY</td>
+<td align="right">346815.9</td>
+<td align="right">200.01</td>
+<td align="right">27</td>
+<td align="right">1.00</td>
+<td align="right">2700</td>
+<td align="right">1734</td>
+</tr>
+<tr>
+<td align="left">IBM</td>
+<td align="right">266086.0</td>
+<td align="right">84.42</td>
+<td align="right">35</td>
+<td align="right">0.64</td>
+<td align="right">2700</td>
+<td align="right">3152</td>
+</tr>
+<tr>
+<td align="left">KAISER PERMANENTE</td>
+<td align="right">262499.6</td>
+<td align="right">88.53</td>
+<td align="right">27</td>
+<td align="right">1.00</td>
+<td align="right">2700</td>
+<td align="right">2965</td>
+</tr>
+<tr>
+<td align="left">WELLS FARGO</td>
+<td align="right">250088.2</td>
+<td align="right">110.03</td>
+<td align="right">27</td>
+<td align="right">1.00</td>
+<td align="right">5400</td>
+<td align="right">2273</td>
+</tr>
+<tr>
+<td align="left">COLUMBIA UNIVERSITY</td>
+<td align="right">248017.5</td>
+<td align="right">147.37</td>
+<td align="right">30</td>
+<td align="right">0.80</td>
+<td align="right">2700</td>
+<td align="right">1683</td>
+</tr>
+<tr>
+<td align="left">DLA PIPER LLP</td>
+<td align="right">240866.7</td>
+<td align="right">1254.51</td>
+<td align="right">1000</td>
+<td align="right">10.00</td>
+<td align="right">2700</td>
+<td align="right">192</td>
+</tr>
+<tr>
+<td align="left">STATE OF CALIFORNIA</td>
+<td align="right">231218.4</td>
+<td align="right">82.23</td>
+<td align="right">27</td>
+<td align="right">1.00</td>
+<td align="right">5400</td>
+<td align="right">2812</td>
+</tr>
+<tr>
+<td align="left">HARVARD UNIVERSITY</td>
+<td align="right">230816.6</td>
+<td align="right">154.08</td>
+<td align="right">27</td>
+<td align="right">1.12</td>
+<td align="right">2700</td>
+<td align="right">1498</td>
+</tr>
+<tr>
+<td align="left">U.S. GOVERNMENT</td>
+<td align="right">221536.4</td>
+<td align="right">127.76</td>
+<td align="right">50</td>
+<td align="right">0.49</td>
+<td align="right">2700</td>
+<td align="right">1734</td>
+</tr>
+<tr>
+<td align="left">KIRKLAND &amp; ELLIS LLP</td>
+<td align="right">221020.6</td>
+<td align="right">846.82</td>
+<td align="right">250</td>
+<td align="right">4.20</td>
+<td align="right">2700</td>
+<td align="right">261</td>
+</tr>
+<tr>
+<td align="left">MERRILL LYNCH</td>
+<td align="right">216704.9</td>
+<td align="right">426.58</td>
+<td align="right">100</td>
+<td align="right">5.00</td>
+<td align="right">5400</td>
+<td align="right">508</td>
+</tr>
+<tr>
+<td align="left">SALESFORCE.COM</td>
+<td align="right">214021.4</td>
+<td align="right">764.36</td>
+<td align="right">100</td>
+<td align="right">3.00</td>
+<td align="right">2700</td>
+<td align="right">280</td>
+</tr>
+<tr>
+<td align="left">AT&amp;T</td>
+<td align="right">211420.4</td>
+<td align="right">71.16</td>
+<td align="right">27</td>
+<td align="right">1.00</td>
+<td align="right">2700</td>
+<td align="right">2971</td>
+</tr>
+<tr>
+<td align="left">PAUL WEISS RIFKIND WHARTON &amp; GARRISON</td>
+<td align="right">204424.1</td>
+<td align="right">844.73</td>
+<td align="right">500</td>
+<td align="right">0.54</td>
+<td align="right">2700</td>
+<td align="right">242</td>
+</tr>
+<tr>
+<td align="left">BANK OF AMERICA</td>
+<td align="right">204218.3</td>
+<td align="right">131.75</td>
+<td align="right">27</td>
+<td align="right">1.00</td>
+<td align="right">2700</td>
+<td align="right">1550</td>
+</tr>
+</tbody></table>
+
+<p><img src="figure/Bivariate_Plots_4-1.png" alt="plot of chunk Bivariate_Plots_4"></p>
+
+<h1>Bivariate Analysis</h1>
+
+<h3>Talk about some of the relationships you observed in this part of the investigation. How did the feature(s) of interest vary with other features in the dataset?</h3>
+
+<p>The preceding discussion highlights the observations I made as part of looking at the bivariate statistics in the included dataset.</p>
+
+<h3>Did you observe any interesting relationships between the other features (not the main feature(s) of interest)?</h3>
+
+<p>One of the interesting observation was Bernard Sanders although leads the group in terms of unique contributors, his gross campaign collection is less than half of Clinton&#39;s groos collection which implies that the average contribution per contributor is significantly less than any of his contenders. This is further underscored when we look at the median contrbution to his campaign fund which is less than any other 2016 presidential candidate.
+The other interesting observation was Google and Goldman Sachs employees almost tied in terms of gross contribution but the median and 75th percentile contribution for Goldman Sachs is almost 100 times of Google.</p>
+
+<h3>What was the strongest relationship you found?</h3>
+
+<p>The Democrat front-runners (Hilary Clinton and Bernard Sanders) are significantly better funded than the Republican front-runner (Rafael Cruz and Jeb Bush). Also Bernard Sanders being the candidate with the second highest gross colecction and the lowest median contribution implies that he is more popular than any of his contenders. This was also highlighted in the first plot of this section.</p>
+
+<h1>Multivariate Plots Section</h1>
+
+<p>For the multivariate plots, I tried to investigate the campaign contribution with respect to several geographic factors for each of the presidential candidates.</p>
+
+<hr>
+
+<p>In the first plot of this section, I wanted to investgate if the duration of the campaign contribution had an effect on the periodic or gross contribution for the candidate. The figure below shows the median and gross contribution for each candidate for the period between 1st of January , 2015 and 31st of May 2016. For the Democrat candidates, we notice that the median contribution to Martin O&#39;Malley&#39;s campaign fund has been consistently higher than Hillary Clinton or Bernard Sanders. However, the gross contribution for Hillary Clinton has been substantially higher compared to the other Democrat candidates. An interesting trend we note is the gradual decrease in the collection between the Clinton and Sanders camp. The higher popularity and lower median contribution of Bernard Sanders is also highlighted in this plot. For the Republican candidates, we notice that Rafael Cruz dominates the gross contribution. This may be partly due to the headstart he had with respect to all the other contending Republican candidates.</p>
+
+<table><thead>
+<tr>
+<th align="left">Party</th>
+<th align="left">Candidate Name</th>
+<th align="left">Month-Year</th>
+<th align="right">Total Contribution</th>
+<th align="right">Mean Contribution</th>
+<th align="right">Median Contribution</th>
+<th align="right">Minimum Contribution</th>
+<th align="right">Maximum Contribution</th>
+<th align="right">Count</th>
+</tr>
+</thead><tbody>
+<tr>
+<td align="left">D</td>
+<td align="left">Clinton, Hillary Rodham</td>
+<td align="left">Apr 2015</td>
+<td align="right">13067431.11</td>
+<td align="right">1138.58</td>
+<td align="right">500.00</td>
+<td align="right">1.00</td>
+<td align="right">5400.00</td>
+<td align="right">11477</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Clinton, Hillary Rodham</td>
+<td align="left">May 2015</td>
+<td align="right">11849846.41</td>
+<td align="right">1140.07</td>
+<td align="right">500.00</td>
+<td align="right">0.01</td>
+<td align="right">5400.00</td>
+<td align="right">10394</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Clinton, Hillary Rodham</td>
+<td align="left">Jun 2015</td>
+<td align="right">13853489.36</td>
+<td align="right">857.43</td>
+<td align="right">200.00</td>
+<td align="right">0.09</td>
+<td align="right">20000.00</td>
+<td align="right">16157</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Clinton, Hillary Rodham</td>
+<td align="left">Jul 2015</td>
+<td align="right">7317887.79</td>
+<td align="right">642.03</td>
+<td align="right">100.00</td>
+<td align="right">0.69</td>
+<td align="right">3700.00</td>
+<td align="right">11398</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Clinton, Hillary Rodham</td>
+<td align="left">Aug 2015</td>
+<td align="right">6270589.89</td>
+<td align="right">432.25</td>
+<td align="right">87.00</td>
+<td align="right">0.10</td>
+<td align="right">2700.00</td>
+<td align="right">14507</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Clinton, Hillary Rodham</td>
+<td align="left">Sep 2015</td>
+<td align="right">10401562.58</td>
+<td align="right">520.08</td>
+<td align="right">100.00</td>
+<td align="right">0.02</td>
+<td align="right">5400.00</td>
+<td align="right">20000</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Clinton, Hillary Rodham</td>
+<td align="left">Oct 2015</td>
+<td align="right">9106924.16</td>
+<td align="right">286.99</td>
+<td align="right">50.00</td>
+<td align="right">0.16</td>
+<td align="right">5400.00</td>
+<td align="right">31733</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Clinton, Hillary Rodham</td>
+<td align="left">Nov 2015</td>
+<td align="right">9821975.98</td>
+<td align="right">391.94</td>
+<td align="right">50.00</td>
+<td align="right">0.07</td>
+<td align="right">5400.00</td>
+<td align="right">25060</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Clinton, Hillary Rodham</td>
+<td align="left">Dec 2015</td>
+<td align="right">13405367.07</td>
+<td align="right">408.23</td>
+<td align="right">50.04</td>
+<td align="right">0.04</td>
+<td align="right">1797624.94</td>
+<td align="right">32838</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Clinton, Hillary Rodham</td>
+<td align="left">Jan 2016</td>
+<td align="right">12768301.90</td>
+<td align="right">258.10</td>
+<td align="right">50.00</td>
+<td align="right">0.08</td>
+<td align="right">1467070.94</td>
+<td align="right">49471</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Clinton, Hillary Rodham</td>
+<td align="left">Feb 2016</td>
+<td align="right">23783385.70</td>
+<td align="right">200.65</td>
+<td align="right">50.00</td>
+<td align="right">0.04</td>
+<td align="right">3686373.26</td>
+<td align="right">118533</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Clinton, Hillary Rodham</td>
+<td align="left">Mar 2016</td>
+<td align="right">24084927.50</td>
+<td align="right">160.16</td>
+<td align="right">25.00</td>
+<td align="right">0.01</td>
+<td align="right">4904860.51</td>
+<td align="right">150378</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Clinton, Hillary Rodham</td>
+<td align="left">Apr 2016</td>
+<td align="right">21704267.00</td>
+<td align="right">132.43</td>
+<td align="right">25.00</td>
+<td align="right">0.04</td>
+<td align="right">3600489.08</td>
+<td align="right">163895</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Clinton, Hillary Rodham</td>
+<td align="left">May 2016</td>
+<td align="right">23529320.18</td>
+<td align="right">136.20</td>
+<td align="right">25.00</td>
+<td align="right">0.01</td>
+<td align="right">4575438.56</td>
+<td align="right">172750</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">O&#39;Malley, Martin Joseph</td>
+<td align="left">May 2015</td>
+<td align="right">660023.79</td>
+<td align="right">2024.61</td>
+<td align="right">2700.00</td>
+<td align="right">2.00</td>
+<td align="right">5400.00</td>
+<td align="right">326</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">O&#39;Malley, Martin Joseph</td>
+<td align="left">Jun 2015</td>
+<td align="right">1231725.84</td>
+<td align="right">1273.76</td>
+<td align="right">1000.00</td>
+<td align="right">0.01</td>
+<td align="right">5400.00</td>
+<td align="right">967</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">O&#39;Malley, Martin Joseph</td>
+<td align="left">Jul 2015</td>
+<td align="right">206060.32</td>
+<td align="right">873.14</td>
+<td align="right">500.00</td>
+<td align="right">5.00</td>
+<td align="right">2700.00</td>
+<td align="right">236</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">O&#39;Malley, Martin Joseph</td>
+<td align="left">Aug 2015</td>
+<td align="right">250682.32</td>
+<td align="right">808.65</td>
+<td align="right">500.00</td>
+<td align="right">5.00</td>
+<td align="right">5400.00</td>
+<td align="right">310</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">O&#39;Malley, Martin Joseph</td>
+<td align="left">Sep 2015</td>
+<td align="right">610920.34</td>
+<td align="right">799.63</td>
+<td align="right">500.00</td>
+<td align="right">5.00</td>
+<td align="right">5400.00</td>
+<td align="right">764</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">O&#39;Malley, Martin Joseph</td>
+<td align="left">Oct 2015</td>
+<td align="right">227282.11</td>
+<td align="right">431.28</td>
+<td align="right">175.00</td>
+<td align="right">5.00</td>
+<td align="right">5400.00</td>
+<td align="right">527</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">O&#39;Malley, Martin Joseph</td>
+<td align="left">Nov 2015</td>
+<td align="right">306302.66</td>
+<td align="right">459.22</td>
+<td align="right">200.00</td>
+<td align="right">2.20</td>
+<td align="right">5400.00</td>
+<td align="right">667</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">O&#39;Malley, Martin Joseph</td>
+<td align="left">Dec 2015</td>
+<td align="right">253970.00</td>
+<td align="right">435.63</td>
+<td align="right">250.00</td>
+<td align="right">3.00</td>
+<td align="right">5400.00</td>
+<td align="right">583</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">O&#39;Malley, Martin Joseph</td>
+<td align="left">Jan 2016</td>
+<td align="right">210915.12</td>
+<td align="right">316.21</td>
+<td align="right">125.00</td>
+<td align="right">5.00</td>
+<td align="right">2700.00</td>
+<td align="right">667</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">O&#39;Malley, Martin Joseph</td>
+<td align="left">Feb 2016</td>
+<td align="right">25320.00</td>
+<td align="right">496.47</td>
+<td align="right">100.00</td>
+<td align="right">5.00</td>
+<td align="right">5400.00</td>
+<td align="right">51</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">O&#39;Malley, Martin Joseph</td>
+<td align="left">Mar 2016</td>
+<td align="right">22974.26</td>
+<td align="right">1148.71</td>
+<td align="right">1000.00</td>
+<td align="right">20.16</td>
+<td align="right">2700.00</td>
+<td align="right">20</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">O&#39;Malley, Martin Joseph</td>
+<td align="left">Apr 2016</td>
+<td align="right">35200.00</td>
+<td align="right">596.61</td>
+<td align="right">250.00</td>
+<td align="right">10.00</td>
+<td align="right">2700.00</td>
+<td align="right">59</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">O&#39;Malley, Martin Joseph</td>
+<td align="left">May 2016</td>
+<td align="right">15975.00</td>
+<td align="right">1065.00</td>
+<td align="right">500.00</td>
+<td align="right">25.00</td>
+<td align="right">2700.00</td>
+<td align="right">15</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Sanders, Bernard</td>
+<td align="left">Apr 2015</td>
+<td align="right">306886.74</td>
+<td align="right">254.05</td>
+<td align="right">104.00</td>
+<td align="right">10.00</td>
+<td align="right">5000.00</td>
+<td align="right">1208</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Sanders, Bernard</td>
+<td align="left">May 2015</td>
+<td align="right">1422389.62</td>
+<td align="right">226.96</td>
+<td align="right">100.00</td>
+<td align="right">1.00</td>
+<td align="right">10000.00</td>
+<td align="right">6267</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Sanders, Bernard</td>
+<td align="left">Jun 2015</td>
+<td align="right">1548228.89</td>
+<td align="right">182.96</td>
+<td align="right">100.00</td>
+<td align="right">1.00</td>
+<td align="right">9000.00</td>
+<td align="right">8462</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Sanders, Bernard</td>
+<td align="left">Jul 2015</td>
+<td align="right">1392221.59</td>
+<td align="right">171.99</td>
+<td align="right">100.00</td>
+<td align="right">1.00</td>
+<td align="right">5000.00</td>
+<td align="right">8095</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Sanders, Bernard</td>
+<td align="left">Aug 2015</td>
+<td align="right">1755376.26</td>
+<td align="right">131.60</td>
+<td align="right">50.00</td>
+<td align="right">1.00</td>
+<td align="right">7300.00</td>
+<td align="right">13339</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Sanders, Bernard</td>
+<td align="left">Sep 2015</td>
+<td align="right">2855869.18</td>
+<td align="right">90.44</td>
+<td align="right">50.00</td>
+<td align="right">1.00</td>
+<td align="right">10000.00</td>
+<td align="right">31579</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Sanders, Bernard</td>
+<td align="left">Oct 2015</td>
+<td align="right">3526818.13</td>
+<td align="right">61.84</td>
+<td align="right">35.00</td>
+<td align="right">1.00</td>
+<td align="right">5400.00</td>
+<td align="right">57034</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Sanders, Bernard</td>
+<td align="left">Nov 2015</td>
+<td align="right">2611370.90</td>
+<td align="right">50.18</td>
+<td align="right">28.54</td>
+<td align="right">1.00</td>
+<td align="right">5400.00</td>
+<td align="right">52036</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Sanders, Bernard</td>
+<td align="left">Dec 2015</td>
+<td align="right">5567356.92</td>
+<td align="right">58.67</td>
+<td align="right">25.00</td>
+<td align="right">1.00</td>
+<td align="right">5400.00</td>
+<td align="right">94895</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Sanders, Bernard</td>
+<td align="left">Jan 2016</td>
+<td align="right">8157349.02</td>
+<td align="right">61.03</td>
+<td align="right">25.00</td>
+<td align="right">1.00</td>
+<td align="right">5400.00</td>
+<td align="right">133660</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Sanders, Bernard</td>
+<td align="left">Feb 2016</td>
+<td align="right">17096430.68</td>
+<td align="right">59.36</td>
+<td align="right">27.00</td>
+<td align="right">1.00</td>
+<td align="right">5400.00</td>
+<td align="right">288029</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Sanders, Bernard</td>
+<td align="left">Mar 2016</td>
+<td align="right">20776045.88</td>
+<td align="right">43.19</td>
+<td align="right">27.00</td>
+<td align="right">1.00</td>
+<td align="right">5400.00</td>
+<td align="right">481077</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Sanders, Bernard</td>
+<td align="left">Apr 2016</td>
+<td align="right">15209918.31</td>
+<td align="right">36.67</td>
+<td align="right">27.00</td>
+<td align="right">1.00</td>
+<td align="right">5000.00</td>
+<td align="right">414765</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Sanders, Bernard</td>
+<td align="left">May 2016</td>
+<td align="right">10376873.34</td>
+<td align="right">35.40</td>
+<td align="right">25.00</td>
+<td align="right">1.00</td>
+<td align="right">5388.12</td>
+<td align="right">293134</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Bush, Jeb</td>
+<td align="left">Jun 2015</td>
+<td align="right">10952760.27</td>
+<td align="right">2208.22</td>
+<td align="right">2700.00</td>
+<td align="right">3.00</td>
+<td align="right">5400.00</td>
+<td align="right">4960</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Bush, Jeb</td>
+<td align="left">Jul 2015</td>
+<td align="right">4002386.50</td>
+<td align="right">1582.60</td>
+<td align="right">1500.00</td>
+<td align="right">1.00</td>
+<td align="right">5700.00</td>
+<td align="right">2529</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Bush, Jeb</td>
+<td align="left">Aug 2015</td>
+<td align="right">4161313.54</td>
+<td align="right">1347.58</td>
+<td align="right">1000.00</td>
+<td align="right">1.00</td>
+<td align="right">10000.00</td>
+<td align="right">3088</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Bush, Jeb</td>
+<td align="left">Sep 2015</td>
+<td align="right">5168878.44</td>
+<td align="right">1399.26</td>
+<td align="right">1000.00</td>
+<td align="right">1.00</td>
+<td align="right">15000.00</td>
+<td align="right">3694</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Bush, Jeb</td>
+<td align="left">Oct 2015</td>
+<td align="right">3288782.48</td>
+<td align="right">1073.71</td>
+<td align="right">500.00</td>
+<td align="right">1.00</td>
+<td align="right">10000.00</td>
+<td align="right">3063</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Bush, Jeb</td>
+<td align="left">Nov 2015</td>
+<td align="right">2185900.12</td>
+<td align="right">900.66</td>
+<td align="right">250.00</td>
+<td align="right">0.50</td>
+<td align="right">10000.00</td>
+<td align="right">2427</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Bush, Jeb</td>
+<td align="left">Dec 2015</td>
+<td align="right">1751970.90</td>
+<td align="right">709.59</td>
+<td align="right">100.00</td>
+<td align="right">0.20</td>
+<td align="right">5400.00</td>
+<td align="right">2469</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Bush, Jeb</td>
+<td align="left">Jan 2016</td>
+<td align="right">1580624.70</td>
+<td align="right">503.38</td>
+<td align="right">100.00</td>
+<td align="right">0.50</td>
+<td align="right">5400.00</td>
+<td align="right">3140</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Bush, Jeb</td>
+<td align="left">Feb 2016</td>
+<td align="right">664051.29</td>
+<td align="right">250.30</td>
+<td align="right">50.00</td>
+<td align="right">0.50</td>
+<td align="right">5400.00</td>
+<td align="right">2653</td>
+</tr>
+</tbody></table>
+
+<p><img src="figure/Multivariate_Plots_1-1.png" alt="plot of chunk Multivariate_Plots_1"></p>
+
+<p>In the next plot I looked at the relative proportion of total contribution made by residents of that state to each of the two political camps - Democrats and Republicans. Not surprisingly, I noticed that the Southern states endorsed the Republican candidates and the North-East and Western states endorsed the Democrat candidates.</p>
+
+<p><img src="figure/Multivariate_Plots_2-1.png" alt="plot of chunk Multivariate_Plots_2"></p>
+
+<p>Next, I wanted to determine what were the top 5 zip codes that contributed most significantly to each of the top 3 republican and Democrat presidential candidates. While there is overlap between the candidates (same zipcode contributing heavily to two or more presidential candidates), we notice the following:</p>
+
+<ol>
+<li>Hillary Clinton&#39;s campaign is heavily endorsed by residents of New York</li>
+<li>Bernard Sanders has followers all over the country including New York, Massachusetts, Vermont, California, and Washington</li>
+<li>Martin O&#39;Malley has a strong follower base in Maryland</li>
+<li>Rafael Cruz and Jeb Bush was endorsed by residents from Florida and Texas</li>
+<li>Marco Rubio was endorsed by residents from Southern California, Florida, and Texas.</li>
+</ol>
+
+<table><thead>
+<tr>
+<th align="left">Party</th>
+<th align="left">Candidate Name</th>
+<th align="left">Zipcode</th>
+<th align="right">Total Contribution</th>
+<th align="right">Mean Contribution</th>
+<th align="right">Median Contribution</th>
+<th align="right">Minimum Contribution</th>
+<th align="right">Maximum Contribution</th>
+<th align="right">Count</th>
+</tr>
+</thead><tbody>
+<tr>
+<td align="left">D</td>
+<td align="left">Clinton, Hillary Rodham</td>
+<td align="left">10185</td>
+<td align="right">21639029.51</td>
+<td align="right">281026.36</td>
+<td align="right">11.00</td>
+<td align="right">1.00</td>
+<td align="right">4904861</td>
+<td align="right">77</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Clinton, Hillary Rodham</td>
+<td align="left">10023</td>
+<td align="right">1418377.97</td>
+<td align="right">425.17</td>
+<td align="right">75.00</td>
+<td align="right">0.09</td>
+<td align="right">2700</td>
+<td align="right">3336</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Clinton, Hillary Rodham</td>
+<td align="left">10024</td>
+<td align="right">1414019.27</td>
+<td align="right">443.82</td>
+<td align="right">99.00</td>
+<td align="right">0.04</td>
+<td align="right">2700</td>
+<td align="right">3186</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Clinton, Hillary Rodham</td>
+<td align="left">10011</td>
+<td align="right">1317309.05</td>
+<td align="right">385.29</td>
+<td align="right">67.24</td>
+<td align="right">0.22</td>
+<td align="right">5400</td>
+<td align="right">3419</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Clinton, Hillary Rodham</td>
+<td align="left">10128</td>
+<td align="right">1086229.47</td>
+<td align="right">540.41</td>
+<td align="right">100.00</td>
+<td align="right">1.00</td>
+<td align="right">2700</td>
+<td align="right">2010</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">O&#39;Malley, Martin Joseph</td>
+<td align="left">20854</td>
+<td align="right">93349.00</td>
+<td align="right">1037.21</td>
+<td align="right">500.00</td>
+<td align="right">24.00</td>
+<td align="right">2700</td>
+<td align="right">90</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">O&#39;Malley, Martin Joseph</td>
+<td align="left">21093</td>
+<td align="right">80309.00</td>
+<td align="right">1216.80</td>
+<td align="right">1000.00</td>
+<td align="right">24.00</td>
+<td align="right">2700</td>
+<td align="right">66</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">O&#39;Malley, Martin Joseph</td>
+<td align="left">21212</td>
+<td align="right">78245.16</td>
+<td align="right">717.85</td>
+<td align="right">250.00</td>
+<td align="right">20.16</td>
+<td align="right">2700</td>
+<td align="right">109</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">O&#39;Malley, Martin Joseph</td>
+<td align="left">21210</td>
+<td align="right">67060.00</td>
+<td align="right">931.39</td>
+<td align="right">500.00</td>
+<td align="right">2.00</td>
+<td align="right">2700</td>
+<td align="right">72</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">O&#39;Malley, Martin Joseph</td>
+<td align="left">20817</td>
+<td align="right">61549.00</td>
+<td align="right">1206.84</td>
+<td align="right">1000.00</td>
+<td align="right">3.00</td>
+<td align="right">2700</td>
+<td align="right">51</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Sanders, Bernard</td>
+<td align="left">02144</td>
+<td align="right">3164729.62</td>
+<td align="right">191.84</td>
+<td align="right">100.00</td>
+<td align="right">1.00</td>
+<td align="right">5400</td>
+<td align="right">16497</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Sanders, Bernard</td>
+<td align="left">94110</td>
+<td align="right">279780.84</td>
+<td align="right">75.37</td>
+<td align="right">27.00</td>
+<td align="right">1.00</td>
+<td align="right">5000</td>
+<td align="right">3712</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Sanders, Bernard</td>
+<td align="left">10025</td>
+<td align="right">242778.80</td>
+<td align="right">64.84</td>
+<td align="right">27.00</td>
+<td align="right">1.00</td>
+<td align="right">2700</td>
+<td align="right">3744</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Sanders, Bernard</td>
+<td align="left">05401</td>
+<td align="right">212676.76</td>
+<td align="right">52.64</td>
+<td align="right">27.00</td>
+<td align="right">1.00</td>
+<td align="right">2690</td>
+<td align="right">4040</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Sanders, Bernard</td>
+<td align="left">98103</td>
+<td align="right">202881.45</td>
+<td align="right">51.77</td>
+<td align="right">27.00</td>
+<td align="right">1.00</td>
+<td align="right">2700</td>
+<td align="right">3919</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Bush, Jeb</td>
+<td align="left">10021</td>
+<td align="right">282500.00</td>
+<td align="right">2373.95</td>
+<td align="right">2700.00</td>
+<td align="right">250.00</td>
+<td align="right">5400</td>
+<td align="right">119</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Bush, Jeb</td>
+<td align="left">10128</td>
+<td align="right">271529.00</td>
+<td align="right">1939.49</td>
+<td align="right">2700.00</td>
+<td align="right">25.00</td>
+<td align="right">5400</td>
+<td align="right">140</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Bush, Jeb</td>
+<td align="left">33480</td>
+<td align="right">263100.00</td>
+<td align="right">1852.82</td>
+<td align="right">2700.00</td>
+<td align="right">50.00</td>
+<td align="right">5400</td>
+<td align="right">142</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Bush, Jeb</td>
+<td align="left">33156</td>
+<td align="right">254303.00</td>
+<td align="right">1883.73</td>
+<td align="right">2700.00</td>
+<td align="right">1.00</td>
+<td align="right">5400</td>
+<td align="right">135</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Bush, Jeb</td>
+<td align="left">10065</td>
+<td align="right">246039.00</td>
+<td align="right">2067.55</td>
+<td align="right">2700.00</td>
+<td align="right">20.00</td>
+<td align="right">5400</td>
+<td align="right">119</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Cruz, Rafael Edward &#39;Ted&#39;</td>
+<td align="left">77024</td>
+<td align="right">1339279.00</td>
+<td align="right">1379.28</td>
+<td align="right">250.00</td>
+<td align="right">5.00</td>
+<td align="right">10800</td>
+<td align="right">971</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Cruz, Rafael Edward &#39;Ted&#39;</td>
+<td align="left">77056</td>
+<td align="right">611890.50</td>
+<td align="right">1381.24</td>
+<td align="right">250.00</td>
+<td align="right">5.00</td>
+<td align="right">10800</td>
+<td align="right">443</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Cruz, Rafael Edward &#39;Ted&#39;</td>
+<td align="left">77019</td>
+<td align="right">579019.00</td>
+<td align="right">1318.95</td>
+<td align="right">250.00</td>
+<td align="right">5.00</td>
+<td align="right">10800</td>
+<td align="right">439</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Cruz, Rafael Edward &#39;Ted&#39;</td>
+<td align="left">75225</td>
+<td align="right">375726.16</td>
+<td align="right">816.80</td>
+<td align="right">100.00</td>
+<td align="right">5.00</td>
+<td align="right">10800</td>
+<td align="right">460</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Cruz, Rafael Edward &#39;Ted&#39;</td>
+<td align="left">77382</td>
+<td align="right">350867.00</td>
+<td align="right">664.52</td>
+<td align="right">100.00</td>
+<td align="right">1.00</td>
+<td align="right">10800</td>
+<td align="right">528</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Rubio, Marco</td>
+<td align="left">33037</td>
+<td align="right">463480.00</td>
+<td align="right">2015.13</td>
+<td align="right">1850.00</td>
+<td align="right">20.00</td>
+<td align="right">9800</td>
+<td align="right">230</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Rubio, Marco</td>
+<td align="left">33480</td>
+<td align="right">311568.05</td>
+<td align="right">1089.40</td>
+<td align="right">1000.00</td>
+<td align="right">3.05</td>
+<td align="right">5400</td>
+<td align="right">286</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Rubio, Marco</td>
+<td align="left">34102</td>
+<td align="right">247858.66</td>
+<td align="right">1169.14</td>
+<td align="right">500.00</td>
+<td align="right">20.00</td>
+<td align="right">5000</td>
+<td align="right">212</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Rubio, Marco</td>
+<td align="left">90210</td>
+<td align="right">242830.00</td>
+<td align="right">1498.95</td>
+<td align="right">1700.00</td>
+<td align="right">10.00</td>
+<td align="right">5400</td>
+<td align="right">162</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Rubio, Marco</td>
+<td align="left">33143</td>
+<td align="right">230568.20</td>
+<td align="right">1020.21</td>
+<td align="right">325.00</td>
+<td align="right">3.05</td>
+<td align="right">5400</td>
+<td align="right">226</td>
+</tr>
+</tbody></table>
+
+<p><img src="figure/Multivariate_Plots_3-1.png" alt="plot of chunk Multivariate_Plots_3"></p>
+
+<p>In the next plot, I looked at the top 10 zipcodes by the number of unique contributors for each presidential candidate. It can be seen that the list of zipcodes from this section and those featured in the 6th plot on univariate statistics are pretty much the same.  For most part, the results from this plot were in agreement with what has been reported in the previous plot. However, there were a few additional artifacts which are listed below:</p>
+
+<ol>
+<li>Hillary Clinton has a reasonably high number of followers from Maryland and Washington DC</li>
+<li>Marco Rubio has a significant number of contributors from Arizona</li>
+<li>Jeb Bush received endorsement from residents of New York and New Jersey</li>
+</ol>
+
+<p><img src="figure/Multivariate_Plots_4-1.png" alt="plot of chunk Multivariate_Plots_4"></p>
+
+<p>In the final plot of this section, I plotted the top 5 cities that grossed highest for each of the top 3 (in terms of gross campaign contribution) presidential candidates from the Democrat and Republican camps. The results seen here reiterated the findings before - Democrats were supported by residents of New York (Ne York and Brooklyn), Maryland (Baltimore, Bethesda, and Washington DC), Washington (Seattle), and California (Los Angeles and San Francisco) and Republicans were primarily funded by contributions from residents of Florida (Miami and Naples) and Texas (Houston, Dallas, Fort Worth, Austin, and San Antonio). A quick note here, many of these cities were also featured in the 5th plot (frequent cities by number of contributions made to the presidential campaign fund) in the univariate section. The only new observation is we see that Portland residents contributed significantly to Bernard Sanders&#39; campaign fund.</p>
+
+<table><thead>
+<tr>
+<th align="left">Party</th>
+<th align="left">Candidate Name</th>
+<th align="left">City</th>
+<th align="right">Total Contribution</th>
+<th align="right">Mean Contribution</th>
+<th align="right">Median Contribution</th>
+<th align="right">Minimum Contribution</th>
+<th align="right">Maximum Contribution</th>
+<th align="right">Count</th>
+</tr>
+</thead><tbody>
+<tr>
+<td align="left">R</td>
+<td align="left">Bush, Jeb</td>
+<td align="left">NEW YORK NY</td>
+<td align="right">2511485.0</td>
+<td align="right">1884.08</td>
+<td align="right">2700.00</td>
+<td align="right">1.00</td>
+<td align="right">5400</td>
+<td align="right">1333</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Bush, Jeb</td>
+<td align="left">HOUSTON TX</td>
+<td align="right">1200143.5</td>
+<td align="right">1415.26</td>
+<td align="right">1000.00</td>
+<td align="right">1.00</td>
+<td align="right">5400</td>
+<td align="right">848</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Bush, Jeb</td>
+<td align="left">DALLAS TX</td>
+<td align="right">881903.5</td>
+<td align="right">1699.24</td>
+<td align="right">2000.00</td>
+<td align="right">1.00</td>
+<td align="right">5400</td>
+<td align="right">519</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Bush, Jeb</td>
+<td align="left">MIAMI FL</td>
+<td align="right">814032.4</td>
+<td align="right">1198.87</td>
+<td align="right">500.00</td>
+<td align="right">1.00</td>
+<td align="right">5400</td>
+<td align="right">679</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Bush, Jeb</td>
+<td align="left">WASHINGTON DC</td>
+<td align="right">799723.8</td>
+<td align="right">1101.55</td>
+<td align="right">500.00</td>
+<td align="right">0.50</td>
+<td align="right">5400</td>
+<td align="right">726</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Clinton, Hillary Rodham</td>
+<td align="left">NEW YORK NY</td>
+<td align="right">38323731.0</td>
+<td align="right">947.58</td>
+<td align="right">67.89</td>
+<td align="right">0.04</td>
+<td align="right">4904861</td>
+<td align="right">40444</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Clinton, Hillary Rodham</td>
+<td align="left">WASHINGTON DC</td>
+<td align="right">7133168.6</td>
+<td align="right">378.48</td>
+<td align="right">100.00</td>
+<td align="right">0.04</td>
+<td align="right">5000</td>
+<td align="right">18847</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Clinton, Hillary Rodham</td>
+<td align="left">LOS ANGELES CA</td>
+<td align="right">6041127.8</td>
+<td align="right">377.78</td>
+<td align="right">50.00</td>
+<td align="right">0.05</td>
+<td align="right">5400</td>
+<td align="right">15991</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Clinton, Hillary Rodham</td>
+<td align="left">SAN FRANCISCO CA</td>
+<td align="right">4808068.8</td>
+<td align="right">359.83</td>
+<td align="right">50.00</td>
+<td align="right">0.09</td>
+<td align="right">5400</td>
+<td align="right">13362</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Clinton, Hillary Rodham</td>
+<td align="left">BROOKLYN NY</td>
+<td align="right">2488408.1</td>
+<td align="right">202.82</td>
+<td align="right">38.00</td>
+<td align="right">0.01</td>
+<td align="right">2700</td>
+<td align="right">12269</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Cruz, Rafael Edward &#39;Ted&#39;</td>
+<td align="left">HOUSTON TX</td>
+<td align="right">5839646.2</td>
+<td align="right">428.38</td>
+<td align="right">50.00</td>
+<td align="right">1.00</td>
+<td align="right">10800</td>
+<td align="right">13632</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Cruz, Rafael Edward &#39;Ted&#39;</td>
+<td align="left">DALLAS TX</td>
+<td align="right">2497155.5</td>
+<td align="right">543.92</td>
+<td align="right">75.00</td>
+<td align="right">1.00</td>
+<td align="right">10800</td>
+<td align="right">4591</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Cruz, Rafael Edward &#39;Ted&#39;</td>
+<td align="left">AUSTIN TX</td>
+<td align="right">1096225.8</td>
+<td align="right">290.39</td>
+<td align="right">50.00</td>
+<td align="right">1.00</td>
+<td align="right">10800</td>
+<td align="right">3775</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Cruz, Rafael Edward &#39;Ted&#39;</td>
+<td align="left">FORT WORTH TX</td>
+<td align="right">818465.5</td>
+<td align="right">238.48</td>
+<td align="right">50.00</td>
+<td align="right">1.00</td>
+<td align="right">10800</td>
+<td align="right">3432</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Cruz, Rafael Edward &#39;Ted&#39;</td>
+<td align="left">SAN ANTONIO TX</td>
+<td align="right">812312.2</td>
+<td align="right">163.25</td>
+<td align="right">50.00</td>
+<td align="right">1.00</td>
+<td align="right">10500</td>
+<td align="right">4976</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">O&#39;Malley, Martin Joseph</td>
+<td align="left">BALTIMORE MD</td>
+<td align="right">460135.8</td>
+<td align="right">907.57</td>
+<td align="right">500.00</td>
+<td align="right">2.00</td>
+<td align="right">5400</td>
+<td align="right">507</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">O&#39;Malley, Martin Joseph</td>
+<td align="left">NEW YORK NY</td>
+<td align="right">140024.0</td>
+<td align="right">809.39</td>
+<td align="right">250.00</td>
+<td align="right">5.00</td>
+<td align="right">2700</td>
+<td align="right">173</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">O&#39;Malley, Martin Joseph</td>
+<td align="left">WASHINGTON DC</td>
+<td align="right">137493.1</td>
+<td align="right">582.60</td>
+<td align="right">250.00</td>
+<td align="right">1.00</td>
+<td align="right">2700</td>
+<td align="right">236</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">O&#39;Malley, Martin Joseph</td>
+<td align="left">BETHESDA MD</td>
+<td align="right">114081.7</td>
+<td align="right">992.01</td>
+<td align="right">500.00</td>
+<td align="right">3.00</td>
+<td align="right">2700</td>
+<td align="right">115</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">O&#39;Malley, Martin Joseph</td>
+<td align="left">SILVER SPRING MD</td>
+<td align="right">53645.0</td>
+<td align="right">406.40</td>
+<td align="right">137.50</td>
+<td align="right">5.00</td>
+<td align="right">2700</td>
+<td align="right">132</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Rubio, Marco</td>
+<td align="left">NEW YORK NY</td>
+<td align="right">1631249.7</td>
+<td align="right">1183.78</td>
+<td align="right">500.00</td>
+<td align="right">5.00</td>
+<td align="right">10800</td>
+<td align="right">1378</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Rubio, Marco</td>
+<td align="left">MIAMI FL</td>
+<td align="right">969856.6</td>
+<td align="right">462.06</td>
+<td align="right">50.00</td>
+<td align="right">3.05</td>
+<td align="right">5700</td>
+<td align="right">2099</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Rubio, Marco</td>
+<td align="left">DALLAS TX</td>
+<td align="right">962537.7</td>
+<td align="right">914.09</td>
+<td align="right">250.00</td>
+<td align="right">4.00</td>
+<td align="right">5400</td>
+<td align="right">1053</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Rubio, Marco</td>
+<td align="left">HOUSTON TX</td>
+<td align="right">877851.7</td>
+<td align="right">711.96</td>
+<td align="right">250.00</td>
+<td align="right">5.00</td>
+<td align="right">5400</td>
+<td align="right">1233</td>
+</tr>
+<tr>
+<td align="left">R</td>
+<td align="left">Rubio, Marco</td>
+<td align="left">NAPLES FL</td>
+<td align="right">631021.9</td>
+<td align="right">572.62</td>
+<td align="right">100.00</td>
+<td align="right">3.05</td>
+<td align="right">5400</td>
+<td align="right">1102</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Sanders, Bernard</td>
+<td align="left">NEW YORK NY</td>
+<td align="right">2379569.2</td>
+<td align="right">64.13</td>
+<td align="right">27.00</td>
+<td align="right">1.00</td>
+<td align="right">5400</td>
+<td align="right">37104</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Sanders, Bernard</td>
+<td align="left">SAN FRANCISCO CA</td>
+<td align="right">1862618.1</td>
+<td align="right">65.46</td>
+<td align="right">27.00</td>
+<td align="right">1.00</td>
+<td align="right">10000</td>
+<td align="right">28456</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Sanders, Bernard</td>
+<td align="left">SEATTLE WA</td>
+<td align="right">1714427.9</td>
+<td align="right">53.53</td>
+<td align="right">27.00</td>
+<td align="right">1.00</td>
+<td align="right">5000</td>
+<td align="right">32028</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Sanders, Bernard</td>
+<td align="left">LOS ANGELES CA</td>
+<td align="right">1604977.5</td>
+<td align="right">55.42</td>
+<td align="right">27.00</td>
+<td align="right">1.00</td>
+<td align="right">5500</td>
+<td align="right">28960</td>
+</tr>
+<tr>
+<td align="left">D</td>
+<td align="left">Sanders, Bernard</td>
+<td align="left">PORTLAND OR</td>
+<td align="right">1271718.6</td>
+<td align="right">48.04</td>
+<td align="right">27.00</td>
+<td align="right">1.00</td>
+<td align="right">7300</td>
+<td align="right">26472</td>
+</tr>
+</tbody></table>
+
+<p><img src="figure/Multivariate_Plots_5-1.png" alt="plot of chunk Multivariate_Plots_5"></p>
+
+<h1>Multivariate Analysis</h1>
+
+<h3>Talk about some of the relationships you observed in this part of the investigation. Were there features that strengthened each other in terms of looking at your feature(s) of interest?</h3>
+
+<p>Following are the observations that can be made from the plots presented in the previous section:</p>
+
+<ol>
+<li>Martin O&#39;Malley&#39;s median contribution amount has been consistently higher than that of Hillary Clinton or Bernard Sanders. At the start of the campign, Hillary CLinton&#39;s campaign fund&#39;s monthly collection was an order of magnitude hhigher than Bernard Sanders but as the months progressed, the gap tapered off. In case of the Republican candidates, we notice that Rafael Cruz and Rubia Marco started their presidential campaign fund collection significantly earlier than Jeb Bush. AS the campaign matured, the collection for each of the candidates almost equaled until they decided to abandon the campaign.</li>
+<li>The plots in the preceding section show us that the Democrat candidates were supported by residents from New York, Maryland, Vermont, New Mexico, Colorado, Illinois, Minnesota, Washington, Massachusetts, California, and Oregon. The Republican Candidates on the other hand were primarily supported by residents of Wyoming, Texas, Louisiana, Mississippi, Alabama, Florida, and Ohio.</li>
+<li>Lastly, on many occasions we notice that there is an overlap between the highest grossing cities and zip codes between the presidential candidates. For example, both Hillary Clinton and Bernard Sanders were heavily endorsed by residents of New York and San Francisco. The same applies to Republican candidates where we observe that Rafael Cruz and Jeb Bush were heavily endorsed by residents of Dallas, Houston, and Fort Worth.</li>
+</ol>
+
+<h3>Were there any interesting or surprising interactions between features?</h3>
+
+<p>We noticed that if a particular zip code or city heavily contributed to one particular candidate, it was likely that they would contribute significantly to other candidates of the same political party. We saw this trend with both Republican and Democrat candidates. Another observation we made was the duration of the campaign had an effect on the overall collection for any given candidate. This can be seen with Martin O&#39;Malley whose gross colecction for any particular month was significantly less than that of Hillary CLinton or Bernard Sanders despite the fact that Martin O&#39;Malley&#39;s median contribution amount was consistently higher than that of the other candidates. The same aplied to candidates from the Republican party where we witnessed that Jeb Bush consistently fell behind Rafael Cruz and Rubio Marco.</p>
+
+<h3>OPTIONAL: Did you create any models with your dataset? Discuss the strengths and limitations of your model.</h3>
+
+<p>No.</p>
+
+<hr>
+
+<h1>Final Plots and Summary</h1>
+
+<h3>Plot One</h3>
+
+<p><img src="figure/Plot_One-1.png" alt="plot of chunk Plot_One"></p>
+
+<h3>Description One</h3>
+
+<p>In the first plot of this section, we revisit the five number statistics and gross collection by each presidential candidate&#39;s campaign fund. The interesting feature in this plot was the fact that some of the contributors (outliers) to Clinton&#39;s presidential campaign contributed more than the gross collection of other presidential candidates.</p>
+
+<h3>Plot Two</h3>
+
+<p><img src="figure/Plot_Two-1.png" alt="plot of chunk Plot_Two"></p>
+
+<h3>Description Two</h3>
+
+<p>In the next plot of this section, we look at the proportion of campign contributions from that state that were made to the Republican and Democrat candidates. As expected, the North-East and West-Coast states endorsed the Democrat candidates and the Southern states endorsed the Republican candidates.</p>
+
+<h3>Plot Three</h3>
+
+<p><img src="figure/Plot_Three-1.png" alt="plot of chunk Plot_Three"></p>
+
+<h3>Description Three</h3>
+
+<p>The final plot of this section points out the major cities that contributed most significantly towards each of the presidential candidate&#39;s campaign fund. Bernard Sanders seems to have the highest spatial variation in terms of his followers who contributed to his campaign.</p>
+
+<hr>
+
+<h1>Reflection</h1>
+
+<h3>Issues</h3>
+
+<p>While conducting this study, I felt that certain variables of interest could have been useful towards obtaining a better insight of the underlying data. The lack of demographic information about the contributors enforced certain restriction on what can be achieved with this dataset. Some additional questions that I would have liked to answer were as follows:</p>
+
+<ol>
+<li>Are female contributors more likely to contribute to the campaign fund of female presidential candidates?</li>
+<li>Are young contributors more likely to associate with one party versus the other, or more specifically with one particular candidate?</li>
+<li>Does the income bracket affect the contributions made by the individual to the presidential campaign?</li>
+</ol>
+
+<p>The location information on the contributors was definitely helpful to recognize the followers for any given candidate spatially. However, demographic information would have helped us understand some basic cause-and-effect relationships as the policies put forward by any candidate are more likely to attract or alienate one group versus the other.</p>
+
+<h3>Conclusion</h3>
+
+<p>In the introduction to this study, I started by identifying a few questions I would liked to know based on what I felt was possible given the dataset we had. Here the answers to those and some additional insight we found during course of this study. </p>
+
+<ol>
+<li>We found that Hillary CLinton ranks first in terms of gross contribution to her campaign fund. Bernard Sanders had the lowest median contribution of all presidential candidates.</li>
+<li>Bernard Sanders had the highest number of unique contributors which also serves as a testament to his popularity.</li>
+<li>We found that attorneys were the single highest contributing profession among all the contributors to the presidential candidates. Interesting though, we found that the 75th percentile contribution for CEOs were considerably higher than any other profession.</li>
+<li>The North-East and West Coast states contrbuted mostly to the Democrat candidates and the Southern states contributed mostly to the Republican candidates.</li>
+<li>Google and Goldman Sachs employees contributed most to the presidential campaign fund. However, the median and 75th percentile contrubtion for Goldman Sachs employees were orders of magnitude higher than Google employees.</li>
+<li>The gross campaign contribution for any presidential candidate was directly proportional to the duration of the campaign program for that candidate. Examples include Martin O&#39;Malley with respect to Hillary Clinton, Jeb Bush when compared with Rafael Cruz, etc.</li>
+</ol>
+
+</body>
+
+</html>

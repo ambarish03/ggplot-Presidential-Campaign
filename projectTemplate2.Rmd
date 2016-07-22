@@ -1,0 +1,968 @@
+# 2016 Presidential Campaign Contribution 
+### by Ambarish Banerjee
+
+## Introduction
+
+The purpose of this exercise was to investigate the 2016 presidential campaign contribution statistics and obtain some insight into the data. Some of the questions I planned to answer included the following:
+
+1. Which candidate received the highest contribution to his/her campaign fund?
+2. Which candidate had the highest number of unique contributors to his/her campaign fund?
+3. Which professions contributed highest to the presidential campaign?
+4. Which are the prominent states and zipcodes that contributed to the Republican and Democrat candidates?
+
+In the foregoing discussion we will look at these questions and try to obtain answers to these questions.
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE)
+```
+
+
+```{r packages}
+# Load all of the packages that you end up using
+# in your analysis in this code chunk.
+
+# Notice that the parameter "echo" was set to FALSE for this code chunk.
+# This prevents the code from displaying in the knitted HTML output.
+# You should set echo=FALSE for all code chunks in your file.
+
+library(ggplot2)
+library(dplyr)
+library(zoo)
+library(gridExtra)
+library(ggmap)
+library(reshape2)
+library(zipcode)
+library(knitr)
+library(markdown)
+library(maps)
+library(scales)
+library(gender)
+```
+
+```{r functions}
+
+abb2state <- function(name, convert = F, strict = F){
+  data(state)
+  # state data doesn't include DC
+  state = list()
+  state[['name']] = c(state.name, "District Of Columbia")
+  state[['abb']] = c(state.abb, "DC")
+  
+  if(convert) state[c(1,2)] = state[c(2,1)]
+  
+  single.a2s <- function(s){
+    if(strict){
+      is.in = tolower(state[['abb']]) %in% tolower(s)
+      ifelse(any(is.in), state[['name']][is.in], NA)
+    }else{
+      # To check if input is in state full name or abb
+      is.in = rapply(state, function(x) tolower(x) %in% tolower(s), how="list")
+      state[['name']][is.in[[ifelse(any(is.in[['name']]), 'name', 'abb')]]]
+    }
+  }
+  sapply(name, single.a2s)
+}
+```
+***
+I start by loading the data into a dataframe. While the assignment required that we look at the campaign contribution from any particular state, I wanted to look at the data for the entire country as some of the questions I wanted to answer include all 50 states. I reduced my dataframe to variables of interest and introduced two derived variables - the candidate's gender and his/her political party.
+
+```{r Load_the_Data}
+# Load the Data
+contribution <- read.csv("~/Downloads/P00000001-ALL.csv", row.names=NULL,
+                           header=TRUE,sep=",", stringsAsFactors=FALSE)
+columnNames <- colnames(contribution)[2:19]
+contribution$election_tp <- NULL
+colnames(contribution) <- columnNames
+contribution$cand_id <- as.factor(contribution$cand_id)
+contribution$cand_nm <- as.factor(contribution$cand_nm)
+contribution$contbr_st <- as.factor(contribution$contbr_st)
+exclude <- c("cmte_id", "receipt_desc", "memo_cd", "memo_text", "form_tp", 
+             "file_num", "tran_id", "election_tp")
+contribution_limited <- contribution[,!(names(contribution) %in% exclude)]
+
+democrats <- c("Clinton, Hillary Rodham", "Sanders, Bernard", 
+"O'Malley, Martin Joseph", "Lessig, Lawrence", "Webb, James Henry Jr.")
+republican <- c("Bush, Jeb", "Carson, Benjamin S.", "Christie, Christopher J.", 
+                  "Cruz, Rafael Edward 'Ted'", "Fiorina, Carly", 
+                  "Gilmore, James S IIII", "Graham, Lindsey O.", 
+                  "Huckabee, Mike", "Jindal, Bobby", "Perry, James R. (Rick)", 
+                  "Kasich, John R.", "Pataki, George E.", "Paul, Rand", 
+                  "Rubio, Marco", "Santorum, Richard J.", "Trump, Donald J.", 
+                  "Walker, Scott")
+contribution_limited$party <- ifelse(contribution$cand_nm %in% democrats,"D", 
+                            ifelse(contribution$cand_nm %in% republican,"R", 
+                            ifelse(contribution$cand_nm == "Stein, Jill", 
+                                                         "G", "L")))
+
+females <- c("Clinton, Hillary Rodham", "Fiorina, Carly", "Stein, Jill")
+contribution_limited$can_gender <- ifelse(contribution$cand_nm 
+                                          %in% females, "F", "M")
+
+contribution_limited$party <- as.factor(contribution_limited$party)
+contribution_limited$can_gender <- as.factor(contribution_limited$can_gender)
+contribution_limited$zip <- substr(clean.zipcodes(contribution_limited
+$contbr_zip), 1, 5)
+contribution_limited$contb_receipt_dt <- as.Date(contribution_limited
+$contb_receipt_dt, "%d-%b-%y")
+
+data(zipcode)
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Summary_data}
+str(contribution_limited)
+
+summary(contribution_limited)
+```
+
+# Univariate Plots Section
+
+In my first plot, I investigate the distribution of contribution amounts for the entire population. One quick note, I excluded contribution amounts greater than 99-percentile and negative amounts as they were related to refunds and some rare situations. In addition, I transformed the y-axis to a logarithmic scale so that the frequent bins don't overshadow the infrequent ones. As expected, most of the contribution amounts were in the range between 0 and 300. However, there were a few additional peaks for higher contribution amounts (>1000) and we will visit them later in this discussion. 
+Please note that I chose not remove the outliers as I believe they contain valuable information and therefore should not be truncated from the dataset.
+
+```{r Univariate_Plots_1, fig.width = 10, fig.height = 6}
+qplot(x=contb_receipt_amt, data=subset(contribution_limited,
+                                      contb_receipt_amt >= 0), 
+      bins=200) + scale_y_log10(labels = comma) + 
+  scale_x_continuous(breaks=seq(0,quantile(contribution_limited
+                                           $contb_receipt_amt, 
+                                             probs=0.99), 300), 
+                       limits = c(0, quantile(contribution_limited
+                                           $contb_receipt_amt, probs=0.99))) + 
+  xlab("Contribution Amount") + ylab("Frequency") + 
+  ggtitle("Histogram of 2016 presidential campaign contributions") + 
+  theme(plot.title = element_text(size = 20, face = "bold"), 
+        axis.text.x = element_text(size = 12), 
+        axis.text.y = element_text(size = 12), 
+        axis.title.x = element_text(size = 14), 
+        axis.title.y = element_text(size = 14))
+
+contb_receipt_amt_summary <- contribution_limited %>%
+  summarise(mean_contrib = mean(contb_receipt_amt), 
+            median_contrib = median(contb_receipt_amt), 
+            min_contrib = min(contb_receipt_amt), 
+            max_contrib = max(contb_receipt_amt), 
+            iqr_contrib = IQR(contb_receipt_amt))
+kable(contb_receipt_amt_summary,digits=2,col.names=c("Mean Contribution", 
+                                                      "Median_Contribution", 
+                                                      "Minimum Contribution", 
+                                                      "Maximum Contribution", 
+                                                      "Contribution IQR"))
+```
+
+In my next plot, we look at the same statistics with the exception of square root transformation on the y-axis to investigate if the plot artifacts are more visible with this transformation which it wasn't.
+
+```{r Univariate_Plots_2, fig.width = 10, fig.height = 6}
+qplot(x=contb_receipt_amt, data=subset(contribution_limited, 
+contb_receipt_amt>=0), 
+        bins=200) + scale_y_sqrt() + 
+scale_x_continuous(breaks=seq(0,quantile(contribution_limited$
+contb_receipt_amt, 
+                       probs = 0.99), 300), 
+                       limits = c(0, quantile(contribution_limited
+                                           $contb_receipt_amt, probs=0.99))) + 
+  xlab("Contribution Amount") + ylab("Frequency") + 
+  ggtitle("Histogram of 2016 presidential campaign contributions")+
+  theme(plot.title = element_text(size = 20, face = "bold"),
+          axis.text.x = element_text(size=12), axis.text.y=element_text(size=12), 
+          axis.title.x = element_text(size=14), 
+        axis.title.y = element_text(size=14)) + 
+  coord_fixed(ratio = 16/9)
+```
+
+In the next plot, I looked at the relative distribution of the contribution amount in the population. It showed that the bulk of the contributors subscribed between $0 and $100 in a single transaction.
+
+```{r Univariate_Plots_3, fig.width = 10, fig.height = 6}
+qplot(x = contb_receipt_amt, y = ..count../sum(..count..), 
+        data=subset(contribution_limited, contb_receipt_amt >= 0), 
+      geom='histogram', 
+        bins=200) + scale_y_sqrt() + 
+  scale_x_continuous(breaks=seq(0, quantile(contribution_limited
+                                           $contb_receipt_amt, 
+                                             probs = 0.95), 50), 
+                       limits = c(0,quantile(contribution_limited
+                                           $contb_receipt_amt,probs=0.95))) + 
+  xlab("Contribution Amount") + ylab("Frequency")+
+  ggtitle("Relative distrbution of 2016 presidential campaign contributions") + 
+  theme(plot.title = element_text(size = 20, face = "bold"), 
+          axis.text.x = element_text(size=12), 
+          axis.text.y = element_text(size=12), 
+          axis.title.x = element_text(size=14), 
+        axis.title.y = element_text(size=14))
+```
+
+In the next plot involving univariate statistics, I looked at the distribution of number of repeat subscriptions made by each of the contributors in the population. Unsurprisingly, the highest peak was noted at 1 (one contribution per user) and the count gradually tapered off. Here also I chose not to remove the outliers as in my opinion they contain valuable information.
+
+```{r Univariate_Plots_4, fig.width = 10, fig.height = 6}
+contributors <- subset(contribution_limited, contb_receipt_amt >= 0) %>%
+  group_by(contbr_nm) %>%
+  summarise(contribution_mean = mean(contb_receipt_amt), 
+              contribution_median = median(contb_receipt_amt), 
+              contribution_sum = sum(contb_receipt_amt), 
+            contribution_min = min(contb_receipt_amt), 
+              contribution_max = max(contb_receipt_amt), 
+            n = n()) %>%
+  arrange(desc(n))
+
+qplot(x = n, data = contributors, bins = 300) + 
+scale_y_sqrt(limits = c(0,120000), breaks = seq(0,120000,10000)) + 
+  scale_x_continuous(breaks = seq(0,quantile(contribution_limited
+  $contb_receipt_amt, probs = 0.95), 100), 
+  limits = c(0, quantile(contribution_limited
+                       $contb_receipt_amt, probs = 0.95)))+
+  xlab("Repeat contributions") + ylab("Frequency") + 
+  ggtitle("Histogram of repeat contributors from 2016 presidential campaign") + 
+  theme(plot.title = element_text(size = 20, face = "bold"), 
+          axis.text.x = element_text(size = 12), 
+        axis.text.y = element_text(size = 12), 
+          axis.title.x = element_text(size = 14), 
+          axis.title.y = element_text(size = 14))
+
+kable(head(contributors, 10), digits=2, col.names=c("Contributor Name", 
+  "Mean Contribution", "Median_Contribution", "Total Contribution", 
+  "Minimum Contribution", "Maximum Contribution", "Count"))
+```
+
+In the following plot, we look at the number of contributions from each of the top 20 cities (by number of contributions). As it can be seen, New York leads the chart with almost two times that of Los Angeles.
+
+```{r Univariate_Plots_5, fig.width = 10, fig.height = 6}
+city_summary_stat <- subset(contribution_limited, contb_receipt_amt >= 0) %>%
+  group_by(contbr_city) %>%
+  summarise(contribution_mean = mean(contb_receipt_amt), 
+              contribution_median = median(contb_receipt_amt), 
+              contribution_sum = sum(contb_receipt_amt), 
+            contribution_min = min(contb_receipt_amt), 
+              contribution_max = max(contb_receipt_amt), 
+            n = n()) %>%
+  arrange(desc(n))
+
+ggplot(aes(x = reorder(contbr_city, -n), y = n), 
+      data = city_summary_stat[1:20,]) + 
+  geom_bar(stat = "identity") + 
+  xlab("") + ylab("Frequency") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) + 
+  ggtitle("Bar-plot featuring top 20 cities by number of contributions") + 
+  theme(plot.title = element_text(size = 20, 
+                                  face = "bold"), 
+          axis.text.x = element_text(size = 12), 
+        axis.text.y = element_text(size = 12), 
+          axis.title.x = element_text(size = 14), 
+          axis.title.y = element_text(size = 14))
+
+kable(head(city_summary_stat, 20), digits=2, col.names=c("City", 
+  "Mean Contribution", "Median_Contribution", "Total Contribution", 
+  "Minimum Contribution", "Maximum Contribution", "Count"))
+```
+
+In the final plot, we look at the top 20 zipcodes in the country that contributed most frequently to the 2016 presidential campaign fund. It can be seen that most of these zipcodes are in one of four metropolitan areas: New York, Boston, San Francisco, or Washington DC.
+
+```{r Univariate_Plots_6, fig.width = 10, fig.height = 6}
+zip_summary_stat <- 
+subset(contribution_limited, contb_receipt_amt >= 0 & !is.na(zip) 
+       & zip != "00000") %>%
+  group_by(zip) %>%
+  summarise(contribution_mean = mean(contb_receipt_amt), 
+              contribution_median = median(contb_receipt_amt), 
+              contribution_sum = sum(contb_receipt_amt), 
+            contribution_min = min(contb_receipt_amt), 
+              contribution_max = max(contb_receipt_amt), 
+            n = n()) %>%
+  arrange(desc(n))
+
+zip_summary_stat_w_city <- merge(zip_summary_stat, zipcode, 
+                                 by = "zip", sort = FALSE)
+
+ggplot(aes(x = reorder(zip, -n), y = n), 
+      data = zip_summary_stat_w_city[1:20,]) + 
+  geom_text(aes(label = city), hjust = -0.1, angle = 90) +
+  geom_bar(stat = "identity") + 
+  scale_y_sqrt(limits = c(0,24000)) + 
+  xlab("") + ylab("Frequency") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) + 
+  ggtitle("Bar-plot featuring top 20 zip codes by number of contributions") + 
+  theme(plot.title = element_text(size = 20, 
+                                  face = "bold"), 
+          axis.text.x = element_text(size = 12), 
+        axis.text.y = element_text(size = 12), 
+          axis.title.x = element_text(size = 14), 
+          axis.title.y = element_text(size = 14))
+
+kable(head(zip_summary_stat, 20), digits=2, col.names=c("Zipcode", 
+  "Mean Contribution", "Median_Contribution", "Total Contribution", 
+  "Minimum Contribution", "Maximum Contribution", "Count"))
+```
+
+# Univariate Analysis
+
+### What is the structure of your dataset?
+I chose the 2016 presidential campaign contribution data for all candidates across all states. The initial dataset contained 18 variables of which I retained ten which are as follows:
+
+1. Candidate Id (cand_id): Factor with 24 levels
+2. Candidate name (cand_nm): Factor with 24 levels
+3. Contributor name (contbr_nm): String
+4. Contributor city (contbr_city): String
+5. Contributor state (contbr_st): Factor with 94 levels
+6. Contributor zip (contbr_zip): String
+7. Contributor employer (contbr_employer): String
+8. Contributor occupation (contbr_occupation): Factors with 73262 levels
+9. Contribution receipt amount (contb_receipt_amt): Numeric
+10. Contribution date (contb_receipt_dt): String
+
+In addition, I introduced two derived variables which are as given below:
+
+1. Political party (party): Factor with 4 levels
+2. Candidate gender (can_gender): Factor with 2 levels
+
+### What is/are the main feature(s) of interest in your dataset?
+
+The most important feature in the dataset is the contribution receipt amount as this is the primary metric under study as part of this analysis. The variables candidate name, contributor city, contributor state, contributor zip, contributor employer, contributor occupation, contribution date, and party will be used to aggregate and view the "contribution amount".
+
+### What other features in the dataset do you think will help support your investigation into your feature(s) of interest?
+
+The political party and gender of each of the presidential candidates can be useful as it would help with between-group comparisons.
+
+### Did you create any new variables from existing variables in the dataset?
+
+Yes, I truncated the zipcode values provided in the dataset into five-digit zipcodes which is introduced later. In addition, I also converted the contribution dates to YYYY-MM format to look at the campaign contribution for each candidate with respect to time. Finally, I transformed the abbreviated "contributor state" to the full name for plotting purposes.
+
+### Of the features you investigated, were there any unusual distributions? Did you perform any operations on the data to tidy, adjust, or change the form of the data? If so, why did you do this?
+
+For the univariate statitics, I investigated both logarithmic and square root transformation on the y-axis in order to ensure that the more frequent groups dont't overshadow the less frequent groups. In case of the contribution amounts, I found a logarithmic transformation was more useful. In addition, I also limited the x-axis (contribution amount) between 0 and 99th percentile to keep the focus on the dominant artificants in the plot. With the relative distribution of the contribution amount, I used the ".." notation to obtain a proportion value for each of the data-bins in my population. Finally, I used the dplyr package to obtain count of repeat contributions made by individual subscribers to the 2016 presidential campaign fund which I highlighted in the final plot in this section.
+
+# Bivariate Plots Section
+
+Before looking at any plot involving two separate variables, I looked at the correlation coefficient between "Contribution date" and "Contribution amount". The results below indicate that there is almost no "linear" relationship between these variables and therefore almost independent of each other.
+
+```{r Correlation_coeff, fig.width = 10, fig.height = 7}
+cor(as.numeric(contribution_limited$contb_receipt_dt), 
+    contribution_limited$contb_receipt_amt)
+```
+
+***
+In the "Bivariate Plot" section, I investigated the relationship between the contribution amount across different factor variables including the presidential candidate, contributor occupation, and contributor employer. In addition, I also looked at the number of unique contributors for each 2016 presidential candidate.
+
+***
+In the first plot of this section, I plotted the number of unique contributors by each candidate. I used the square-root transformation for the y-axis. The plot features suggest that Bernie Sanders tops the chart with approximately 220,000 unqiue contributors with Hillary Clinton at the second spot at 180,000. The closest Republican contender, Rafael Cruz, was at 100,000.
+
+```{r Bivariate_Plots_1, fig.width = 10, fig.height = 7}
+unique_contributors_by_candidate <- contribution_limited %>%
+  select(cand_nm,contbr_nm) %>%
+  distinct %>%
+  group_by(cand_nm) %>%
+  summarise(n=n()) %>%
+  arrange(desc(n))
+
+ggplot(aes(x=reorder(cand_nm, -n),y=n),data=unique_contributors_by_candidate)+
+  geom_bar(stat="identity") + 
+  scale_y_sqrt() + 
+  coord_flip() + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) + 
+  xlab("") + 
+  ylab("Unique Contributors") + 
+  ggtitle("Unique Contributors by Candidate") + 
+  theme(plot.title = element_text(size = 20,face = "bold"), 
+          axis.text.x=element_text(size=12), 
+          axis.text.y=element_text(size=12), 
+          axis.title.x=element_text(size=14), 
+          axis.title.y=element_text(size=14))
+```
+
+In the next plot, we look at the summary statisitics and gross contribution for each 2016 presidential candidate. The most interesting feature in this plot was the fact that some of the contributors (outliers) to Clinton's presidential campaign contributed more than the gross collection of other presidential candidates.
+
+```{r Bivariate_Plots_2, fig.width = 13, fig.height = 7}
+total_contributions_by_cand <- subset(contribution_limited, 
+contb_receipt_amt>0) %>%
+  group_by(cand_nm) %>%
+  summarise(total_contribution = sum(contb_receipt_amt), 
+            mean_contribution=mean(contb_receipt_amt), 
+            median_contribution=median(contb_receipt_amt), 
+            min_contribution=min(contb_receipt_amt), 
+            max_contribution=max(contb_receipt_amt)) %>%
+  arrange(desc(total_contribution))
+
+kable(total_contributions_by_cand, digits=2, 
+col.names = c("Candidate Name", "Total Contribution", "Mean Contribution", 
+"Median Contribution", "Minimum Contribution", "Maximum Contribution"))
+
+ggplot(aes(x=cand_nm, y=contb_receipt_amt), data=subset(contribution_limited, 
+contb_receipt_amt > 1)) + 
+geom_boxplot() + scale_y_log10(labels = comma) + 
+theme(axis.text.x = element_text(angle = 90, hjust = 1)) + 
+ggtitle("Five-number statistics for each 2016 presidential 
+candidate contribution") + 
+xlab("") + ylab("Contribution Amount ($)") + 
+geom_point(aes(x = cand_nm, y = total_contribution, 
+               size = total_contribution), 
+data = total_contributions_by_cand, pch = 17) + 
+  scale_size_continuous(labels = comma) + 
+theme(plot.title = element_text(size = 20, face = "bold"), 
+axis.text.x = element_text(size = 12), 
+axis.text.y = element_text(size = 12), 
+axis.title.x = element_text(size = 14), 
+axis.title.y = element_text(size = 14), 
+legend.title = element_text(size = 14), 
+legend.text = element_text(size = 12)) + 
+guides(size = guide_legend(title = "Total Contribution"))
+```
+
+In the next plot, we look at the campaign contributions from the 20 highest grossing occupations. We notice that Attroneys top the chart followed closely by Homemakers. Some of the other professions that also contributed heavily to the 2016 campaign fund include CEOs, consultants, and owners. An interesting feature that we notice here is that CEOs lag behnd attorneys and homemakers in gross contribution but their 75th percentile is significantly higher than any other group.
+
+```{r Bivariate_Plots_3, fig.width = 13, fig.height = 9}
+contribution_by_occupation <- subset(contribution_limited,
+contb_receipt_amt > 0 &
+!is.na(contbr_occupation) &
+!contbr_occupation %in% 
+c('INFORMATION REQUESTED', '', 
+'INFORMATION REQUESTED PER BEST EFFORTS', 
+   'RETIRED', 'NOT EMPLOYED')) %>%
+  group_by(contbr_occupation) %>%
+  summarise(total_contribution=sum(contb_receipt_amt), 
+            mean_contribution=mean(contb_receipt_amt), 
+            median_contribution=median(contb_receipt_amt), 
+            min_contribution=min(contb_receipt_amt), 
+            max_contribution=max(contb_receipt_amt), 
+            n=n())%>%
+  arrange(desc(total_contribution))
+
+kable(contribution_by_occupation[1:20,], digits = 2, 
+col.names = c("Occupation Name", "Total Contribution", "Mean Contribution",
+"Median Contribution", "Minimum Contribution", "Maximum Contribution", "Count"))
+
+ggplot(aes(x = contbr_occupation, 
+y = contb_receipt_amt), 
+       data = subset(contribution_limited, contbr_occupation %in% 
+                     contribution_by_occupation$contbr_occupation[1:20] & 
+                     contb_receipt_amt > 1)) + 
+  geom_boxplot() + scale_y_log10(labels = comma) + 
+  theme(axis.text.x = element_text(angle = 90,hjust = 1)) + 
+  ggtitle("Five-number statistics and gross contributions 
+  for top 20 professions") + 
+  xlab("")+ylab("Contribution Amount ($)") + 
+  scale_size_continuous(labels = comma) + 
+  geom_point(aes(x = contbr_occupation,
+  y = total_contribution,
+  size = total_contribution), 
+             data = contribution_by_occupation[1:20,], pch=23) + 
+  theme(plot.title = element_text(size = 20, face = "bold"), 
+        axis.text.x = element_text(size = 12), 
+        axis.text.y = element_text(size = 12), 
+        axis.title.x = element_text(size = 14), 
+        axis.title.y = element_text(size = 14), 
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 12)) + 
+  guides(size = guide_legend(title = "Total Contribution"))
+```
+
+In the final plot in this section, we look at the contributions made by employees of different companies. Employees from Google and Goldman Sachs are almost tied at the top sport for gross contribution while the median and 75th percentile contribution for employyes from Goldman Sachs is almost two orders of magnitude higher. Another interesting feature was that employees from Stanford University comprised one of the top 5 contributing groups to the 2016 presidential campaign fund.
+
+```{r Bivariate_Plots_4, fig.width = 13, fig.height = 9}
+contribution_by_employer <- subset(contribution_limited, contb_receipt_amt > 0 & 
+                                 !contbr_employer %in% 
+                                 c("RETIRED", "NONE", "INFORMATION REQUESTED", 
+                                 "", "N/A", "SELF-EMPLOYED", "NOT EMPLOYED", 
+                                 "SELF EMPLOYED", "HOMEMAKER", "SELF", 
+                                 "STUDENT", 
+                                 "INFORMATION REQUESTED PER BEST EFFORTS", 
+                                 "CIVIC VOLUNTEER", "REFUSED", 
+                                 "SELF EMPLOYED-EMPLOYED", "UNEMPLOYED") 
+                                   & !is.na(contbr_employer)) %>%
+  group_by(contbr_employer) %>%
+  summarise(total_contribution=sum(contb_receipt_amt), 
+            mean_contribution=mean(contb_receipt_amt), 
+            median_contribution=median(contb_receipt_amt), 
+            min_contribution=min(contb_receipt_amt), 
+            max_contribution=max(contb_receipt_amt), 
+            n=n())%>%
+  arrange(desc(total_contribution))
+
+kable(contribution_by_employer[1:20,], digits=2, 
+col.names = c("Employer Name", "Total Contribution", "Mean Contribution", 
+"Median Contribution", "Minimum Contribution", "Maximum Contribution", "Count"))
+
+ggplot(aes(x = contbr_employer, 
+y = contb_receipt_amt),data = 
+         subset(contribution_limited, contbr_employer %in% 
+                  contribution_by_employer$contbr_employer[1:20] & 
+                  contb_receipt_amt > 1)) + 
+  geom_boxplot() + 
+  scale_y_log10(labels = comma) +
+  theme(axis.text.x = element_text(angle = 90,hjust = 1)) + 
+  ggtitle("Five-number statistics and gross contributions 
+  from top 20 employers") + 
+  xlab("")+ylab("Contribution Amount ($)") + 
+  scale_size_continuous(labels = comma) + 
+  geom_point(aes(x = contbr_employer, y=total_contribution, 
+  size=total_contribution), 
+             data = contribution_by_employer[1:20,], pch=25) + 
+  theme(plot.title = element_text(size = 20,face = "bold"), 
+        axis.text.x = element_text(size = 12), 
+        axis.text.y = element_text(size = 12), 
+        axis.title.x = element_text(size = 14), 
+        axis.title.y = element_text(size = 14), 
+        legend.title = element_text(size = 14), 
+        legend.text = element_text(size = 12)) + 
+  guides(size = guide_legend(title = "Total Contribution"))
+```
+
+# Bivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the investigation. How did the feature(s) of interest vary with other features in the dataset?
+The preceding discussion highlights the observations I made as part of looking at the bivariate statistics in the included dataset.
+
+### Did you observe any interesting relationships between the other features (not the main feature(s) of interest)?
+One of the interesting observation was Bernard Sanders although leads the group in terms of unique contributors, his gross campaign collection is less than half of Clinton's groos collection which implies that the average contribution per contributor is significantly less than any of his contenders. This is further underscored when we look at the median contrbution to his campaign fund which is less than any other 2016 presidential candidate.
+The other interesting observation was Google and Goldman Sachs employees almost tied in terms of gross contribution but the median and 75th percentile contribution for Goldman Sachs is almost 100 times of Google.
+
+### What was the strongest relationship you found?
+The Democrat front-runners (Hilary Clinton and Bernard Sanders) are significantly better funded than the Republican front-runner (Rafael Cruz and Jeb Bush). Also Bernard Sanders being the candidate with the second highest gross colecction and the lowest median contribution implies that he is more popular than any of his contenders. This was also highlighted in the first plot of this section.
+
+# Multivariate Plots Section
+
+For the multivariate plots, I tried to investigate the campaign contribution with respect to several geographic factors for each of the presidential candidates.
+***
+In the first plot of this section, I wanted to investgate if the duration of the campaign contribution had an effect on the periodic or gross contribution for the candidate. The figure below shows the median and gross contribution for each candidate for the period between 1st of January , 2015 and 31st of May 2016. For the Democrat candidates, we notice that the median contribution to Martin O'Malley's campaign fund has been consistently higher than Hillary Clinton or Bernard Sanders. However, the gross contribution for Hillary Clinton has been substantially higher compared to the other Democrat candidates. An interesting trend we note is the gradual decrease in the collection between the Clinton and Sanders camp. The higher popularity and lower median contribution of Bernard Sanders is also highlighted in this plot. For the Republican candidates, we notice that Rafael Cruz dominates the gross contribution. This may be partly due to the headstart he had with respect to all the other contending Republican candidates.
+
+```{r Multivariate_Plots_1, fig.width = 12, fig.height = 11}
+
+contribution_limited$contb_receipt_dt <- as.Date(contribution_limited
+$contb_receipt_dt, "%d-%b-%y")
+contribution_limited$month_year <- as.yearmon(contribution_limited
+$contb_receipt_dt)
+
+contribution_over_time_by_cand <- subset(contribution_limited,
+contb_receipt_amt > 0) %>%
+  group_by(party, cand_nm, month_year) %>%
+  summarise(net_contrib = sum(contb_receipt_amt), 
+            mean_contrib = mean(contb_receipt_amt), 
+            median_contrib = median(contb_receipt_amt), 
+            min_contrib = min(contb_receipt_amt), 
+            max_contrib = max(contb_receipt_amt), 
+            n=n()) %>%
+  arrange(party, cand_nm, month_year)
+  
+
+kable(head(subset(contribution_over_time_by_cand, cand_nm %in% 
+                         total_contributions_by_cand[total_contributions_by_cand
+                         $cand_nm %in% democrats,][1:3,]$cand_nm |
+        cand_nm %in% 
+                         total_contributions_by_cand[total_contributions_by_cand
+                         $cand_nm %in% republican,][1:3,]$cand_nm) ,50), 
+      digits = 2, col.names = c("Party", "Candidate Name", "Month-Year",
+                              "Total Contribution", "Mean Contribution", 
+                              "Median Contribution", "Minimum Contribution", 
+                              "Maximum Contribution", "Count"))
+
+p1 <- ggplot(aes(x = month_year, y = median_contrib), 
+           data=subset(contribution_over_time_by_cand,party=="D" & 
+                         cand_nm %in% 
+                         total_contributions_by_cand[total_contributions_by_cand
+                         $cand_nm %in% democrats,][1:3,]$cand_nm)) + 
+  geom_line(aes(linetype = cand_nm)) + 
+  geom_point(aes(x = month_year, y = net_contrib, 
+  size = net_contrib,pch=cand_nm), 
+             data = subset(contribution_over_time_by_cand,party == "D" & 
+             cand_nm %in% 
+                           total_contributions_by_cand
+                        [total_contributions_by_cand$cand_nm %in% democrats,]
+                           [1:3,]$cand_nm)) + 
+  scale_x_yearmon(limits = 
+  c(as.yearmon(as.Date("01/01/2015", "%d/%m/%Y"), "%b %Y"), 
+    as.yearmon(as.Date("05/31/2016", "%d/%m/%Y"), "%b %Y"))
+                           , format="%b %Y") + 
+  scale_y_log10(labels = comma) + xlab("") + ylab("Contribution ($)") + 
+  ggtitle("Median and Gross contributions for Top 3 
+  Democrat Presidential Candidates") + 
+  scale_size_continuous(labels = comma) + 
+  theme(plot.title = element_text(size = 20,face = "bold"), 
+        axis.text.x = element_text(size = 12), 
+        axis.text.y = element_text(size = 12), 
+        axis.title.x = element_text(size = 14), 
+        axis.title.y = element_text(size = 14), 
+        legend.title = element_blank(), 
+        legend.title = element_text(size = 14), 
+        legend.text = element_text(size = 12), legend.position = "top")
+
+p2 <- ggplot(aes(x = month_year, y = median_contrib), 
+           data=subset(contribution_over_time_by_cand,party == "R" & 
+                         cand_nm %in% 
+                         total_contributions_by_cand[total_contributions_by_cand
+                         $cand_nm %in% republican,][1:3,]$cand_nm)) + 
+  geom_line(aes(linetype = cand_nm)) + 
+  geom_point(aes(x = month_year, y = net_contrib, 
+  size = net_contrib,pch=cand_nm),
+             data = subset(contribution_over_time_by_cand,party == "R" & 
+                           cand_nm %in% 
+                           total_contributions_by_cand
+                           [total_contributions_by_cand$cand_nm %in% 
+                           republican,][1:3,]$cand_nm)) + 
+  scale_x_yearmon(limits = 
+  c(as.yearmon(as.Date("01/01/2015", "%d/%m/%Y"), "%b %Y"), 
+                           as.yearmon(as.Date("05/31/2016", "%d/%m/%Y"), 
+                           "%b %Y")), format="%b %Y") + 
+  scale_y_log10(labels = comma) + xlab("") + ylab("Contribution ($)") + 
+  ggtitle("Median and Gross contributions for Top 3 Republican 
+  Presidential Candidates") + 
+  scale_size_continuous(labels = comma) + 
+  theme(plot.title = element_text(size = 20, face = "bold"), 
+        axis.text.x = element_text(size = 12), 
+        axis.text.y = element_text(size = 12), 
+        axis.title.x = element_text(size = 14), 
+        axis.title.y = element_text(size = 14), 
+        legend.title = element_blank(), 
+        legend.title = element_text(size = 14), 
+        legend.text = element_text(size = 12), 
+        legend.position = "top")
+
+grid.arrange(p1, p2, ncol = 1)
+```
+
+In the next plot I looked at the relative proportion of total contribution made by residents of that state to each of the two political camps - Democrats and Republicans. Not surprisingly, I noticed that the Southern states endorsed the Republican candidates and the North-East and Western states endorsed the Democrat candidates.
+
+```{r Multivariate_Plots_2, fig.width = 12, fig.height = 7}
+US_map <- map_data("state")
+
+contribution_by_state_and_party <- subset(contribution_limited, 
+contb_receipt_amt>0 & 
+                                            contbr_st %in% 
+                                            state.abb & party != "L") %>%
+  group_by(contbr_st, party) %>%
+  summarise(contribution_amt = sum(contb_receipt_amt)) %>%
+  arrange(party, contbr_st)
+
+list_of_states <- tolower(abb2state(contribution_by_state_and_party$contbr_st))
+contribution_by_state_and_party$region <- list_of_states
+contribution_by_state_and_party$contbr_st <- NULL
+
+contribution_by_state_and_party.wide <- dcast(contribution_by_state_and_party, 
+                                              region~party, 
+                                              value.var = "contribution_amt")
+contribution_by_state_and_party.wide$democrat_prop <- 
+  contribution_by_state_and_party.wide$D/
+  (contribution_by_state_and_party.wide$D + 
+  contribution_by_state_and_party.wide$R)
+donationMap <- merge(US_map, 
+contribution_by_state_and_party.wide,by = "region")
+sorted_donation_map <- donationMap %>%
+  select(lat, long, group, democrat_prop, order) %>%
+  arrange(group, order)
+
+ggplot(data = sorted_donation_map, aes(x=long, y=lat, group=group, 
+fill = democrat_prop))+ 
+  geom_polygon(color = "black") + 
+  scale_fill_continuous(low = "red",high = "dark blue",  
+                      breaks = c(0, 0.5, 1), limits = c(0,1), 
+                      labels = c("Republican", 0.5, "Democrat")) + 
+  xlab("Longitude") + ylab("Latitude") + 
+  ggtitle("State-wise distribution of contributions to Democrat & 
+  Republican candidates") + 
+  coord_fixed(ratio = 12/9) + 
+  theme(plot.title = element_text(size = 20,face = "bold"),
+        axis.text.x = element_text(size = 12), 
+        axis.text.y = element_text(size = 12),
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        legend.title = element_blank(),
+        legend.position = "top",
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 12))
+```
+
+Next, I wanted to determine what were the top 5 zip codes that contributed most significantly to each of the top 3 republican and Democrat presidential candidates. While there is overlap between the candidates (same zipcode contributing heavily to two or more presidential candidates), we notice the following:
+
+1. Hillary Clinton's campaign is heavily endorsed by residents of New York
+2. Bernard Sanders has followers all over the country including New York, Massachusetts, Vermont, California, and Washington
+3. Martin O'Malley has a strong follower base in Maryland
+4. Rafael Cruz and Jeb Bush was endorsed by residents from Florida and Texas
+5. Marco Rubio was endorsed by residents from Southern California, Florida, and Texas.
+
+```{r Multivariate_Plots_3, fig.width = 12, fig.height = 8}
+
+contribution_by_candidate_byzipcode <- subset(contribution_limited, 
+contb_receipt_amt > 0 
+& contbr_st %in% state.abb & party != "L" 
+& !is.na(zip)) %>%
+  group_by(party, cand_nm, zip) %>%
+  summarise(gross_contrib = sum(contb_receipt_amt), 
+            mean_contrib = mean(contb_receipt_amt), 
+            median_contrib = median(contb_receipt_amt), 
+            min_contrib = min(contb_receipt_amt), 
+            max_contrib = max(contb_receipt_amt), 
+            n=n()) %>%
+  arrange(party, cand_nm, desc(gross_contrib)) %>%
+  top_n(5, wt = gross_contrib)
+
+kable(subset(contribution_by_candidate_byzipcode, cand_nm %in% 
+               total_contributions_by_cand[total_contributions_by_cand
+               $cand_nm %in% democrats,][1:3,]$cand_nm |
+               cand_nm %in% 
+    total_contributions_by_cand[total_contributions_by_cand
+    $cand_nm %in% republican,][1:3,]$cand_nm), 
+    digits = 2, col.names = c("Party", "Candidate Name", "Zipcode",
+    "Total Contribution", "Mean Contribution", "Median Contribution", 
+    "Minimum Contribution", "Maximum Contribution", "Count"))
+
+zipcode_contrib_map <- merge(contribution_by_candidate_byzipcode, 
+zipcode, by="zip")
+
+ggplot(aes(x = long, y = lat,group = group),data = US_map) + 
+geom_polygon(fill = "white", color = "grey") + 
+  geom_point(aes(x = longitude, y = latitude, group = party, pch = cand_nm,
+  size = gross_contrib), 
+             data = subset(zipcode_contrib_map, cand_nm %in% 
+                           total_contributions_by_cand
+                           [total_contributions_by_cand$cand_nm %in% democrats,]
+                           [1:3,]$cand_nm | 
+  cand_nm %in% 
+    total_contributions_by_cand[total_contributions_by_cand
+    $cand_nm %in% republican,][1:3,]$cand_nm)) + 
+  xlab("Longitude") + ylab("Latitude") + 
+  ggtitle("Highest grossing zipcodes for Democrat & 
+  Republican candidate contributions") + 
+  scale_size_continuous(labels = comma, range = c(2,5)) + 
+  coord_fixed(ratio = 12/9) + 
+  theme(plot.title = element_text(size = 19,face = "bold"),
+        axis.text.x = element_text(size = 12), 
+        axis.text.y = element_text(size = 12), 
+        axis.title.x = element_text(size = 14), 
+        axis.title.y = element_text(size = 14), 
+        legend.title = element_blank(), 
+        legend.position = "top", 
+        legend.title = element_text(size = 14), 
+        legend.text = element_text(size = 12))
+```
+
+In the next plot, I looked at the top 10 zipcodes by the number of unique contributors for each presidential candidate. It can be seen that the list of zipcodes from this section and those featured in the 6th plot on univariate statistics are pretty much the same.  For most part, the results from this plot were in agreement with what has been reported in the previous plot. However, there were a few additional artifacts which are listed below:
+
+1. Hillary Clinton has a reasonably high number of followers from Maryland and Washington DC
+2. Marco Rubio has a significant number of contributors from Arizona
+3. Jeb Bush received endorsement from residents of New York and New Jersey
+
+```{r Multivariate_Plots_4,fig.width = 12,fig.height = 14}
+ contributors_by_candidate_byzipcode <- subset(contribution_limited, 
+                                    contb_receipt_amt > 0 & contbr_st %in% 
+                                    state.abb & party != "L" & !is.na(zip)) %>%
+   select(party, cand_nm, zip, contbr_nm) %>%
+   distinct() %>%
+  group_by(party, cand_nm, zip) %>%
+  summarise(n=n()) %>%
+  arrange(party, cand_nm, desc(n)) %>%
+  top_n(10, wt = n)
+ 
+zipcode_contributor_map <- merge(contributors_by_candidate_byzipcode, 
+zipcode, by="zip")
+
+ggplot(aes(x = long,y = lat,group = group),data = US_map) + 
+  geom_polygon(fill = "white",color = "grey") + 
+  geom_point(aes(x = longitude, 
+  y = latitude, 
+  group = party, 
+  pch = cand_nm, 
+  size = n), 
+             data = subset(zipcode_contributor_map, 
+  cand_nm %in% 
+    total_contributions_by_cand[total_contributions_by_cand$cand_nm %in% 
+    democrats,][1:3,]$cand_nm | 
+  cand_nm %in% 
+    total_contributions_by_cand[total_contributions_by_cand$cand_nm %in% 
+    republican,][1:3,]$cand_nm)) + 
+  scale_size_continuous(labels = comma) + 
+  facet_wrap(~party,nrow=2) + 
+  xlab("Longitude") + ylab("Latitude") + 
+  ggtitle("Zipcodes with most contributors for Democrat & 
+  Republican candidate contributors") + 
+  coord_fixed(ratio=12/9) + 
+  theme(plot.title = element_text(size = 19,face = "bold"), 
+        axis.text.x = element_text(size = 12), 
+        axis.text.y = element_text(size = 12), 
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        legend.title = element_blank(),
+        legend.position = "top",
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 12))
+```
+
+In the final plot of this section, I plotted the top 5 cities that grossed highest for each of the top 3 (in terms of gross campaign contribution) presidential candidates from the Democrat and Republican camps. The results seen here reiterated the findings before - Democrats were supported by residents of New York (Ne York and Brooklyn), Maryland (Baltimore, Bethesda, and Washington DC), Washington (Seattle), and California (Los Angeles and San Francisco) and Republicans were primarily funded by contributions from residents of Florida (Miami and Naples) and Texas (Houston, Dallas, Fort Worth, Austin, and San Antonio). A quick note here, many of these cities were also featured in the 5th plot (frequent cities by number of contributions made to the presidential campaign fund) in the univariate section. The only new observation is we see that Portland residents contributed significantly to Bernard Sanders' campaign fund.
+
+```{r Multivariate_Plots_5, fig.width = 12, fig.height = 8}
+data(us.cities)
+contribution_by_candidate_by_city <- subset(contribution_limited, 
+contb_receipt_amt > 0 & !party %in% c("L", "G")) %>%
+  group_by(party, cand_nm, 
+  contbr_city = paste(contbr_city, contbr_st,sep=" ")) %>%
+  summarise(total_contrib = sum(contb_receipt_amt), 
+            mean_contrib = mean(contb_receipt_amt), 
+            median_contrib = median(contb_receipt_amt), 
+            min_contrib = min(contb_receipt_amt), 
+            max_contrib = max(contb_receipt_amt), 
+            n = n()) %>%
+  arrange(cand_nm, desc(total_contrib)) %>%
+  group_by(cand_nm, party) %>%
+  top_n(n = 5)
+
+kable(subset(contribution_by_candidate_by_city, cand_nm %in% 
+               total_contributions_by_cand[total_contributions_by_cand
+               $cand_nm %in% democrats,][1:3,]$cand_nm |
+               cand_nm %in% 
+    total_contributions_by_cand[total_contributions_by_cand
+    $cand_nm %in% republican,][1:3,]$cand_nm), 
+    digits = 2, col.names = c("Party", "Candidate Name", "City", 
+    "Total Contribution", "Mean Contribution", "Median Contribution", 
+    "Minimum Contribution", "Maximum Contribution", "Count"))
+
+city_mod <- us.cities
+city_mod$contbr_city <- toupper(city_mod$name)
+city_contribution_map <- merge(contribution_by_candidate_by_city, city_mod, 
+                               by = "contbr_city")
+
+ggplot(aes(x = long, y = lat, group = group), data=US_map)+
+  geom_polygon(fill="white",color="grey") + 
+  geom_point(aes(x = long, y = lat, group = party, pch = cand_nm, 
+  size = total_contrib), 
+             data = subset(city_contribution_map, 
+  cand_nm %in% 
+    total_contributions_by_cand[total_contributions_by_cand
+    $cand_nm %in% democrats,][1:3,]$cand_nm | 
+  cand_nm %in% 
+    total_contributions_by_cand[total_contributions_by_cand
+    $cand_nm %in% republican,][1:3,]$cand_nm)) + 
+  xlab("Longitude") + ylab("Latitude") + 
+  ggtitle("Highest grossing cities for Democrat & 
+  Republican candidate contributors") + 
+  coord_fixed(ratio = 12/9) + 
+  scale_size_continuous(labels = comma) + 
+  theme(plot.title = element_text(size = 19,face = "bold"), 
+        axis.text.x = element_text(size = 12), 
+        axis.text.y = element_text(size = 12), 
+        axis.title.x = element_text(size = 14), 
+        axis.title.y = element_text(size = 14), 
+        legend.title = element_blank(), 
+        legend.position = "top", 
+        legend.title = element_text(size = 14), 
+        legend.text = element_text(size = 12))
+```
+
+# Multivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the investigation. Were there features that strengthened each other in terms of looking at your feature(s) of interest?
+Following are the observations that can be made from the plots presented in the previous section:
+
+1. Martin O'Malley's median contribution amount has been consistently higher than that of Hillary Clinton or Bernard Sanders. At the start of the campign, Hillary CLinton's campaign fund's monthly collection was an order of magnitude hhigher than Bernard Sanders but as the months progressed, the gap tapered off. In case of the Republican candidates, we notice that Rafael Cruz and Rubia Marco started their presidential campaign fund collection significantly earlier than Jeb Bush. AS the campaign matured, the collection for each of the candidates almost equaled until they decided to abandon the campaign.
+2. The plots in the preceding section show us that the Democrat candidates were supported by residents from New York, Maryland, Vermont, New Mexico, Colorado, Illinois, Minnesota, Washington, Massachusetts, California, and Oregon. The Republican Candidates on the other hand were primarily supported by residents of Wyoming, Texas, Louisiana, Mississippi, Alabama, Florida, and Ohio.
+3. Lastly, on many occasions we notice that there is an overlap between the highest grossing cities and zip codes between the presidential candidates. For example, both Hillary Clinton and Bernard Sanders were heavily endorsed by residents of New York and San Francisco. The same applies to Republican candidates where we observe that Rafael Cruz and Jeb Bush were heavily endorsed by residents of Dallas, Houston, and Fort Worth.
+
+### Were there any interesting or surprising interactions between features?
+We noticed that if a particular zip code or city heavily contributed to one particular candidate, it was likely that they would contribute significantly to other candidates of the same political party. We saw this trend with both Republican and Democrat candidates. Another observation we made was the duration of the campaign had an effect on the overall collection for any given candidate. This can be seen with Martin O'Malley whose gross colecction for any particular month was significantly less than that of Hillary CLinton or Bernard Sanders despite the fact that Martin O'Malley's median contribution amount was consistently higher than that of the other candidates. The same aplied to candidates from the Republican party where we witnessed that Jeb Bush consistently fell behind Rafael Cruz and Rubio Marco.
+
+### OPTIONAL: Did you create any models with your dataset? Discuss the strengths and limitations of your model.
+No.
+
+------
+
+# Final Plots and Summary
+
+### Plot One
+```{r Plot_One, fig.width = 13, fig.height = 7}
+ggplot(aes(x=cand_nm, y=contb_receipt_amt), data=subset(contribution_limited, 
+contb_receipt_amt > 1)) + 
+geom_boxplot() + scale_y_log10(labels = comma) + 
+theme(axis.text.x = element_text(angle = 90, hjust = 1)) + 
+ggtitle("Five-number statistics for each 2016 presidential 
+candidate contribution") + 
+xlab("") + ylab("Contribution Amount ($)") + 
+geom_point(aes(x = cand_nm, y = total_contribution, 
+               size = total_contribution), 
+data = total_contributions_by_cand, pch = 17) + 
+  scale_size_continuous(labels = comma) + 
+theme(plot.title = element_text(size = 20, face = "bold"), 
+axis.text.x = element_text(size = 12), 
+axis.text.y = element_text(size = 12), 
+axis.title.x = element_text(size = 14), 
+axis.title.y = element_text(size = 14), 
+legend.title = element_text(size = 14), 
+legend.text = element_text(size = 12)) + 
+guides(size = guide_legend(title = "Total Contribution"))
+```
+
+### Description One
+In the first plot of this section, we revisit the five number statistics and gross collection by each presidential candidate's campaign fund. The interesting feature in this plot was the fact that some of the contributors (outliers) to Clinton's presidential campaign contributed more than the gross collection of other presidential candidates.
+
+### Plot Two
+```{r Plot_Two, fig.width = 12, fig.height = 7}
+ggplot(data = sorted_donation_map, aes(x=long, y=lat, group=group, 
+fill = democrat_prop))+ 
+  geom_polygon(color = "black") + 
+  scale_fill_continuous(low = "red",high = "dark blue",  
+                      breaks = c(0, 0.5, 1), limits = c(0,1), 
+                      labels = c("Republican", 0.5, "Democrat")) + 
+  xlab("Longitude") + ylab("Latitude") + 
+  ggtitle("State-wise distribution of contributions to Democrat & 
+  Republican candidates") + 
+  coord_fixed(ratio = 12/9) + 
+  theme(plot.title = element_text(size = 20,face = "bold"),
+        axis.text.x = element_text(size = 12), 
+        axis.text.y = element_text(size = 12),
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        legend.title = element_blank(),
+        legend.position = "top",
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 12))
+```
+
+### Description Two
+In the next plot of this section, we look at the proportion of campign contributions from that state that were made to the Republican and Democrat candidates. As expected, the North-East and West-Coast states endorsed the Democrat candidates and the Southern states endorsed the Republican candidates.
+
+### Plot Three
+```{r Plot_Three, fig.width = 12, fig.height = 8}
+ggplot(aes(x = long, y = lat, group = group), data=US_map)+
+  geom_polygon(fill="white",color="grey") + 
+  geom_point(position=position_jitter(width=1,height=1),aes(x = long, y = lat, group = party, pch = cand_nm, 
+  size = total_contrib), 
+             data = subset(city_contribution_map, 
+  cand_nm %in% 
+    total_contributions_by_cand[total_contributions_by_cand
+    $cand_nm %in% democrats,][1:3,]$cand_nm | 
+  cand_nm %in% 
+    total_contributions_by_cand[total_contributions_by_cand
+    $cand_nm %in% republican,][1:3,]$cand_nm)) + 
+  xlab("Longitude") + ylab("Latitude") + 
+  ggtitle("Highest grossing cities for Democrat & 
+  Republican candidate contributors") + 
+  coord_fixed(ratio = 12/9) + 
+  scale_size_continuous(labels = comma, range = c(2,4)) + 
+  theme(plot.title = element_text(size = 19,face = "bold"), 
+        axis.text.x = element_text(size = 12), 
+        axis.text.y = element_text(size = 12), 
+        axis.title.x = element_text(size = 14), 
+        axis.title.y = element_text(size = 14), 
+        legend.title = element_blank(), 
+        legend.position = "top", 
+        legend.title = element_text(size = 14), 
+        legend.text = element_text(size = 12))
+```
+
+### Description Three
+The final plot of this section points out the major cities that contributed most significantly towards each of the presidential candidate's campaign fund. Bernard Sanders seems to have the highest spatial variation in terms of his followers who contributed to his campaign.
+
+------
+
+# Reflection
+
+### Issues
+While conducting this study, I felt that certain variables of interest could have been useful towards obtaining a better insight of the underlying data. The lack of demographic information about the contributors enforced certain restriction on what can be achieved with this dataset. Some additional questions that I would have liked to answer were as follows:
+
+1. Are female contributors more likely to contribute to the campaign fund of female presidential candidates?
+2. Are young contributors more likely to associate with one party versus the other, or more specifically with one particular candidate?
+3. Does the income bracket affect the contributions made by the individual to the presidential campaign?
+
+The location information on the contributors was definitely helpful to recognize the followers for any given candidate spatially. However, demographic information would have helped us understand some basic cause-and-effect relationships as the policies put forward by any candidate are more likely to attract or alienate one group versus the other.
+
+### Conclusion
+In the introduction to this study, I started by identifying a few questions I would liked to know based on what I felt was possible given the dataset we had. Here the answers to those and some additional insight we found during course of this study. 
+
+1. We found that Hillary CLinton ranks first in terms of gross contribution to her campaign fund. Bernard Sanders had the lowest median contribution of all presidential candidates.
+2. Bernard Sanders had the highest number of unique contributors which also serves as a testament to his popularity.
+3. We found that attorneys were the single highest contributing profession among all the contributors to the presidential candidates. Interesting though, we found that the 75th percentile contribution for CEOs were considerably higher than any other profession.
+4. The North-East and West Coast states contrbuted mostly to the Democrat candidates and the Southern states contributed mostly to the Republican candidates.
+5. Google and Goldman Sachs employees contributed most to the presidential campaign fund. However, the median and 75th percentile contrubtion for Goldman Sachs employees were orders of magnitude higher than Google employees.
+6. The gross campaign contribution for any presidential candidate was directly proportional to the duration of the campaign program for that candidate. Examples include Martin O'Malley with respect to Hillary Clinton, Jeb Bush when compared with Rafael Cruz, etc.
